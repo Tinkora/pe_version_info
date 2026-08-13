@@ -1,0 +1,21 @@
+[package]
+name = "pe_version_info_core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Safe core library for inspecting and editing Windows PE version resources"
+publish = false
+
+[dependencies]
+editpe.workspace = true
+image.workspace = true
+schemars.workspace = true
+same-file.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+tempfile.workspace = true
+thiserror.workspace = true
+toml.workspace = true

@@ -4,35 +4,31 @@
 
 ```text
 ChatGPT/Codex 宿主
-   ├─ Skill：指导 Agent
-   ├─ MCP：结构化工具
-   └─ MCP Apps UI：表单、预览、确认
+   └─ Draft Skill：指导 Agent
              │
-             └── pevi CLI / MCP Server
-                         │
-                 pe_version_info_core
-                  ├─ editpe：已有 PE 资源重建
-                  ├─ image：PNG/JPEG/ICO
-                  ├─ resvg：SVG
-                  └─ PDFium：PDF（可选）
-                         │
-                      EXE/DLL
+             └── pevi CLI
+                    │
+            pe_version_info_core
+             ├─ editpe：已有 PE 资源重建
+             └─ image：PNG/JPEG/ICO
+                    │
+                 EXE/DLL
 ```
 
-## 2. 推荐工作区结构
+## 2. 当前工作区结构
 
 ```text
 pe_version_info/
 ├── crates/pe_version_info_core/
 ├── crates/pevi_cli/
-├── crates/pevi_mcp/
 ├── plugin/pe-version-info/
 ├── fixtures/
-├── tests/
+├── schemas/
 └── docs/
 ```
 
 插件只是分发元数据和 Agent 指令，Rust crate 才是行为唯一事实来源。
+MCP Server 与 UI 是已记录的后续工作，当前目录和 plugin manifest 中都不存在。
 
 ## 3. 资源修改流程
 
@@ -48,7 +44,9 @@ pe_version_info/
 
 ## 5. 图标转换
 
-PNG/JPEG 使用 `image`；SVG 使用 `resvg`/`usvg`；PDF 使用 PDFium 渲染指定页（默认第 1 页）。默认保持宽高比、不裁剪，使用透明留白；只有用户显式选择 `cover` 时才裁剪。ICO 输入保留有效的多分辨率帧。
+首个发布候选使用 `image` 支持 PNG/JPEG/ICO。默认保持宽高比、不裁剪，并使用透明留白；只有用户显式选择 `cover` 时才裁剪。ICO 输入保留有效的多分辨率帧。
+
+SVG 与 PDF 属于后续能力：SVG 计划使用 `resvg`/`usvg`，PDF 计划使用 PDFium 渲染指定页（默认第 1 页）。两者必须先证明资源上限、许可证和所有目标平台的可复现 runtime 分发。
 
 PDFium 属于原生运行时，启用 PDF 前必须记录各平台二进制来源、许可证和校验值。
 

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ReportEnvelope",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string"
+    },
+    "data": true,
+    "errors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ErrorReport"
+      }
+    },
+    "ok": {
+      "type": "boolean"
+    },
+    "schema_version": {
+      "type": "integer",
+      "format": "uint32",
+      "const": 1,
+      "minimum": 0
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "ok",
+    "command",
+    "data",
+    "warnings",
+    "errors"
+  ],
+  "$defs": {
+    "ErrorReport": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message",
+        "details"
+      ]
+    }
+  }
+}

@@ -1,0 +1,31 @@
+[workspace]
+members = [
+  "crates/pe_version_info_core",
+  "crates/pevi_cli",
+]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0-alpha.1"
+edition = "2024"
+rust-version = "1.95.0"
+license = "MIT"
+repository = "https://github.com/Tinkora/pe_version_info"
+
+[workspace.dependencies]
+clap = { version = "4.6.6", features = ["derive"] }
+assert_cmd = "2.2.0"
+editpe = { version = "=0.2.4", default-features = false, features = ["std"] }
+image = { version = "0.25.10", default-features = false, features = ["ico", "jpeg", "png"] }
+schemars = "1.2.2"
+same-file = "1.0.6"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.11.0"
+tempfile = "3.27.0"
+thiserror = "2.0"
+toml = "1.0"
+
+[profile.release]
+lto = "thin"
+strip = true

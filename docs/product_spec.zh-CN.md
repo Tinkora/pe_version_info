@@ -1,6 +1,6 @@
 # Tinkora PE Version Info 产品规格
 
-状态：Idea / L0
+状态：Draft
 日期：2026-08-13
 仓库：<https://github.com/Tinkora/pe_version_info>
 
@@ -26,7 +26,7 @@ Windows 资源管理器通过 PE 文件中的 `VERSIONINFO` 资源显示产品�
 - 不做 PE 反汇编、加壳、恶意软件分析或可执行文件优化；
 - 不承诺修改资源后仍保持 Authenticode 签名有效；
 - 不推测用户没有提供的法律、版权和产品信息；
-- 不承诺支持所有文件格式。首版支持 PNG、JPEG、ICO、SVG、PDF，其他格式必须明确失败；
+- 不承诺支持所有文件格式。首个发布候选支持 PNG、JPEG、ICO；SVG 和 PDF 在 renderer 上限、许可证与 runtime 分发可复现后再加入，其他格式必须明确失败；
 - 不静默覆盖输入文件；
 - CLI/Skill 模式默认不把本地 EXE 或图标内容上传到远端服务。
 
@@ -46,14 +46,14 @@ pevi inspect --input dist/app.exe --format json
 pevi plan --config pevi.toml
 pevi apply --config pevi.toml --output dist/app-versioned.exe
 pevi verify --input dist/app-versioned.exe --format json
-pevi convert-icon --input assets/logo.svg --output build/logo.ico
+pevi convert-icon --input assets/logo.png --output build/logo.ico
 ```
 
 CLI 必须支持 Windows、macOS、Linux，并对校验、格式、签名策略和写入错误返回非零退出码。
 
 ### 4.3 Codex Skill
 
-Skill 指导 Agent 创建/读取配置、解析路径、先 `inspect` 再 `apply`、使用 dry-run 解释变化、避免静默覆盖、写入后执行 `verify`，以及准确报告不支持的格式和签名后果。
+Skill 指导 Agent 创建/读取配置、解析路径、先 `inspect` 再 `apply`、使用 `plan` 摘要解释变化、避免静默覆盖、写入后执行 `verify`，以及准确报告不支持的格式和签名后果。
 
 ### 4.4 可选 MCP Server/UI
 
@@ -63,6 +63,6 @@ ChatGPT/Codex 自定义 UI 运行在 MCP Apps iframe 中。文件选择/上传�
 
 ## 5. 成功标准
 
-Alpha 阶段至少完成：三平台构建；三平台读写 fixture EXE；PNG/JPEG/SVG/ICO/PDF 图标转换；VERSIONINFO 往返验证；默认拒绝已签名输入；稳定 JSON dry-run；Agent 可只依赖 Skill 完成流程。
+Alpha 阶段至少完成：三平台构建；三平台读写 fixture EXE；PNG/JPEG/ICO 图标转换且不隐式裁切；使用独立于 `editpe` 的 Windows API 或检查器验证 VERSIONINFO 和主图标；真实 Authenticode fixture 在修改前有效，并在显式授权修改后由独立工具报告为失效或无签名；默认拒绝已签名输入；机器可读的 `plan` 摘要；干净消费环境完成 CLI 流程，fresh agent 无需阅读项目源码即可完成 Skill 流程；准确候选 commit 的托管 native、文档和供应链检查全部通过；候选产物包含 checksum、SBOM、许可证证据、可用的 provenance/attestation 和受保护的 `v*` tag 治理。
 
 如果某种格式需要大型原生运行时、存在不清晰的再分发权利或渲染不确定，应停止扩展格式矩阵，保留明确支持列表并给出转换建议。

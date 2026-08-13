@@ -43,7 +43,7 @@ Reject malformed/truncated/cyclic resource directories with stable errors and no
 | Target PE | PE32 and PE32+ EXE/DLL |
 | Existing resource | present or absent VERSIONINFO; present or absent main icon |
 | Version language | `en-US` / UTF-16LE (`040904B0`) |
-| Icon source | PNG, JPEG, ICO, SVG, PDF first page |
+| Icon source | PNG, JPEG, ICO; SVG/PDF are follow-up features |
 | Signed input | reject by default; explicit invalidation override only |
 | Output | separate path by default; explicit in-place mode |
 

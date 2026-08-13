@@ -1,6 +1,6 @@
 # Tinkora PE Version Info
 
-> **状态：Idea / L0**——当前仓库只包含产品与实现规划，尚未包含可用实现。
+> **状态：Draft**——native core/CLI 和 Draft Codex Skill 已通过托管 native、文档和供应链检查；Alpha 仍需独立 Windows 资源与 Authenticode 证据、干净消费环境/Skill 验收，以及完整发布治理证据。
 
 [English](README.md)
 
@@ -16,20 +16,34 @@
 </p>
 <!-- markdownlint-enable MD033 -->
 
-一个面向 Windows PE 文件的跨平台工具规划：读取和修改 EXE/DLL 的 `VERSIONINFO`，替换程序图标，并将整个流程提供给人类用户和 AI Agent 使用。
+PE Version Info（`pevi`）在 native 主机上检查并安全更新 Windows PE32/PE32+ EXE/DLL 的 `VERSIONINFO` 和图标。Core 使用 `editpe`，CLI 为自动化输出一个稳定 JSON 对象。
 
-规划中的产品分为三层：
+当前候选范围：
 
-- `pevi`：使用 Rust 编写的确定性 CLI/库，可在 Windows、macOS、Linux 上修改已有 `.exe` 或 `.dll`。
-- `pevi` Codex Skill：配置模板与安全的 Agent 操作规范，便于接入重复的构建流程。
-- 可选 MCP Server/UI：为支持 MCP Apps 的宿主提供结构化检查、预览、确认和文件选择。
+- Rust native core 和 `pevi` CLI：`inspect`、`plan`、`apply`、`verify`、`init`、`convert-icon`。
+- `en-US`/UTF-16LE（`040904B0`）VERSIONINFO、未知字符串保留，以及 PNG/JPEG/ICO 图标输入。
+- 默认独立输出、事务性写入、有界解码；原地编辑或存在证书表时必须提供两组显式授权。
+- Draft Codex Skill/plugin 编排；不宣称 Agent-callable MCP 支持。
 
-首版计划使用 [`editpe`](https://github.com/Systemcluster/editpe) 进行跨平台 PE 资源解析与重建。 [`winresource`](https://github.com/BenjaminRi/winresource) 更适合 Rust 应用构建时嵌入 Windows 资源，不作为修改任意既有 EXE 的主引擎。
+SVG、PDF、MCP/UI 和人工 Explorer UI 复核属于后续范围。Alpha 仍要求独立 Windows API 或检查器提供资源与 Authenticode 证据。不要绕过“修改后验证、再签名”的流程处理已签名正式文件。
 
-本项目尚未达到生产可用状态。在签名失效、备份、原子替换和写后验证全部实现并测试前，不要用它修改已签名的正式发布文件。
+## 快速开始
 
-## 规划
+```bash
+cargo build --locked --release -p pevi_cli
+target/release/pevi --help
+target/release/pevi inspect --input fixtures/pe32_unsigned.exe --format json
+```
 
-详细实现计划见 [`docs/superpowers/plans/2026_08_13_pe_version_info.md`](docs/superpowers/plans/2026_08_13_pe_version_info.md)。
+执行修改前请阅读[配置](docs/configuration.zh-CN.md)、[安全与兼容性](docs/security_and_compatibility.zh-CN.md)和[发布流程](docs/RELEASING.zh-CN.md)。
 
-架构决策与调研记录见 [`docs/decisions/`](docs/decisions/)。
+## 开发检查
+
+```bash
+cargo fmt --all -- --check
+cargo test --workspace --locked
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo deny check advisories bans licenses sources
+```
+
+另请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)、[SECURITY.md](SECURITY.md)、[SUPPORT.md](SUPPORT.md) 和 [CHANGELOG.md](CHANGELOG.md)。

@@ -1,0 +1,72 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    name: Rust ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        run: rustup toolchain install 1.95.0 --profile minimal --component rustfmt --component clippy
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run tests
+        run: cargo test --workspace --locked
+
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+      - name: Check MSRV
+        run: cargo +1.95.0 check --workspace --all-targets --locked
+
+      - name: Build CLI for consumer acceptance
+        run: cargo build --locked -p pevi_cli
+
+      - name: Run clean-consumer acceptance
+        run: >-
+          python scripts/test_clean_consumer.py
+          --pevi target/debug/pevi
+          --evidence artifacts/clean-consumer-${{ runner.os }}.json
+
+      - name: Upload clean-consumer evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: clean-consumer-${{ runner.os }}
+          path: artifacts/clean-consumer-${{ runner.os }}.json
+          if-no-files-found: error
+
+      - name: Verify Windows resources and Authenticode independently
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >-
+          ./scripts/test_windows_evidence.ps1
+          -PeviPath ./target/debug/pevi.exe
+          -EvidencePath ./artifacts/windows-native-evidence.json
+
+      - name: Upload Windows native evidence
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: windows-native-evidence
+          path: artifacts/windows-native-evidence.json
+          if-no-files-found: error

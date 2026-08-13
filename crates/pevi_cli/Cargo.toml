@@ -1,0 +1,25 @@
+[package]
+name = "pevi_cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Cross-platform CLI for Windows PE VERSIONINFO and icon updates"
+publish = false
+
+[[bin]]
+name = "pevi"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+pe_version_info_core = { version = "0.1.0-alpha.1", path = "../pe_version_info_core" }
+serde.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+
+[dev-dependencies]
+assert_cmd.workspace = true
+image.workspace = true
+toml.workspace = true

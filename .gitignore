@@ -2,6 +2,12 @@
 /dist/
 /output/
 /.worktrees/
+*.profraw
+coverage.lcov
 *.bak
 *.tmp
 .DS_Store
+.env
+.env.*
+__pycache__/
+*.py[cod]

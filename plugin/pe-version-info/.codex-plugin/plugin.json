@@ -1,0 +1,23 @@
+{
+  "name": "pe-version-info",
+  "version": "0.1.0-alpha.1",
+  "description": "Draft Codex workflow for safely inspecting and updating Windows PE VERSIONINFO and icons with the pevi CLI.",
+  "author": {
+    "name": "Tinkora",
+    "url": "https://github.com/Tinkora"
+  },
+  "homepage": "https://github.com/Tinkora/pe_version_info#readme",
+  "repository": "https://github.com/Tinkora/pe_version_info",
+  "license": "MIT",
+  "keywords": ["windows", "pe", "versioninfo", "icons", "ai-agents"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "PE Version Info",
+    "shortDescription": "Safely inspect and update PE metadata with pevi.",
+    "longDescription": "Draft Skill workflow for inspecting and updating Windows PE VERSIONINFO and icons through the local pevi CLI. MCP/UI and unrestricted image formats are not included.",
+    "developerName": "Tinkora",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Use the PE Version Info Skill to inspect and safely update this Windows executable."
+  }
+}

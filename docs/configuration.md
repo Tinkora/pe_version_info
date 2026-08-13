@@ -12,11 +12,8 @@ input = "dist/MyApp.exe"
 output = "dist/MyApp-versioned.exe"
 
 [policy]
-allow_signed_input = false
 overwrite_output = false
-backup_input = false
 preserve_unknown_strings = true
-replace_all_icon_groups = false
 
 [version]
 file_version = "2.2.0.0"
@@ -33,12 +30,15 @@ CompanyName = "Example Company"
 LegalCopyright = "Copyright © 2026 Example Company"
 
 [icon]
-source = "assets/logo.pdf"
-pdf_page = 1
+source = "assets/logo.png"
 fit = "contain"
 background = "transparent"
 target_sizes = [16, 24, 32, 48, 64, 128, 256]
 ```
+
+Remove an unrequested `[version]` or `[icon]` section entirely. The generated
+`pevi init` template keeps both mutation sections commented so that merely
+creating a template cannot change VERSIONINFO or icons.
 
 ## 2. Required validation
 
@@ -51,6 +51,8 @@ target_sizes = [16, 24, 32, 48, 64, 128, 256]
 - `target_sizes` must be unique, sorted, and in `16..=256`.
 - `fit` is `contain` by default. `cover` is allowed only with an explicit `allow_crop = true`.
 - `background` is `transparent` or an explicit `#RRGGBBAA` value.
+- The first release candidate accepts PNG, JPEG, and ICO icon sources. SVG and
+  PDF fail as unsupported until their follow-up feature gates are complete.
 
 ## 3. CLI commands
 
@@ -65,7 +67,7 @@ Writes a commented template. It never reads or modifies an EXE.
 ### `inspect`
 
 ```text
-pevi inspect --input <path> [--format human|json] [--include-resource-summary]
+pevi inspect --input <path> [--format human|json]
 ```
 
 Returns PE type, architecture, signature presence, VERSIONINFO fields, language tables, icon groups, SHA-256, and warnings. It is read-only.
@@ -76,7 +78,7 @@ Returns PE type, architecture, signature presence, VERSIONINFO fields, language 
 pevi plan --config <path> [--format human|json]
 ```
 
-Resolves paths and displays the exact intended changes, including signature consequences and icon conversion details. It never writes.
+Resolves paths and displays a summary of the requested changes, including signature consequences and icon conversion details. It never writes; the summary is not a stable field-by-field diff.
 
 ### `apply`
 
@@ -99,7 +101,7 @@ Checks that the file is parseable, requested values match, the icon is valid, an
 ### `convert-icon`
 
 ```text
-pevi convert-icon --input <path> --output <path.ico> [--pdf-page <n>]
+pevi convert-icon --input <path> --output <path.ico>
                   [--fit contain|cover --allow-crop]
 ```
 
@@ -114,17 +116,28 @@ Every command using `--format json` emits one JSON object with:
   "schema_version": 1,
   "ok": true,
   "command": "apply",
-  "input": { "path": "dist/MyApp.exe", "sha256": "..." },
-  "output": { "path": "dist/MyApp-versioned.exe", "sha256": "..." },
-  "changes": {
-    "version": { "file_version": ["2.1.0.0", "2.2.0.0"] },
-    "strings": { "ProductName": [null, "My application"] },
-    "icon": { "source_format": "pdf", "page": 1, "cropped": false }
-  },
-  "signature": {
-    "input_signed": false,
-    "output_signature_valid": false,
-    "warning": null
+  "data": {
+    "input_path": "dist/MyApp.exe",
+    "output_path": "dist/MyApp-versioned.exe",
+    "input_sha256": "...",
+    "output_sha256": "...",
+    "signature": {
+      "input_certificate_table_present": false,
+      "output_signature_validated": false,
+      "signature_invalidated_by_edit": false
+    },
+    "version_changed": true,
+    "icon_changed": false,
+    "version": {
+      "file_version": "2.2.0.0",
+      "product_version": "2.2.0.0",
+      "language": "en-US",
+      "code_page": 1200,
+      "strings": {
+        "ProductName": "My application"
+      }
+    },
+    "icon": null
   },
   "warnings": [],
   "errors": []
@@ -132,3 +145,8 @@ Every command using `--format json` emits one JSON object with:
 ```
 
 Error objects use stable `code`, a human message, and a safe `details` object. Details must not contain access tokens, full environment dumps, or unrelated directory listings.
+
+`version` and `icon` are `null` when that resource type was not requested. When
+present, they record the values verified in the output. The icon object contains
+`source_format`, `renderer`, `target_sizes`, and `cropped`; it never includes the
+source image bytes.

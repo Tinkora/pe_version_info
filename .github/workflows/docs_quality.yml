@@ -1,0 +1,28 @@
+name: Documentation quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  markdown:
+    name: Markdown and public-contract checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Lint Markdown
+        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
+      - name: Check Markdown links and syntax
+        run: python scripts/check_public_contracts.py
+      - name: Test release evidence generation
+        run: |
+          python scripts/test_release_evidence.py
+          python scripts/test_validate_release_version.py

@@ -1,6 +1,6 @@
 # Tinkora PE Version Info Product Specification
 
-Status: Idea / L0
+Status: Draft
 Date: 2026-08-13
 Repository: <https://github.com/Tinkora/pe_version_info>
 
@@ -26,7 +26,7 @@ The result is repeated, fragile scripting for a normal release task: set the pro
 - It is not a general PE disassembler, packer, malware-analysis tool, or executable optimizer.
 - It does not make a signed executable remain signed after a resource edit.
 - It does not infer arbitrary legal/copyright text or invent product metadata.
-- It does not promise support for every possible image or document format. The first supported set is PNG, JPEG, ICO, SVG, and PDF; unsupported formats must fail clearly.
+- It does not promise support for every possible image or document format. The first release candidate supports PNG, JPEG, and ICO. SVG and PDF remain follow-up formats until their renderer limits, licenses, and runtime distribution are reproducible; unsupported formats must fail clearly.
 - It does not silently overwrite an input file.
 - It does not upload local EXE or icon contents to a remote service in CLI/Skill mode.
 
@@ -54,7 +54,7 @@ pevi inspect --input dist/app.exe --format json
 pevi plan --config pevi.toml
 pevi apply --config pevi.toml --output dist/app-versioned.exe
 pevi verify --input dist/app-versioned.exe --format json
-pevi convert-icon --input assets/logo.svg --output build/logo.ico
+pevi convert-icon --input assets/logo.png --output build/logo.ico
 ```
 
 The CLI must support Windows, macOS, and Linux. It must return non-zero exit codes for validation, format, signature-policy, and write failures.
@@ -85,11 +85,14 @@ ChatGPT/Codex custom UI is an MCP Apps resource rendered in an iframe; local fil
 
 - A clean checkout builds one CLI binary on macOS, Linux, and Windows.
 - A fixture EXE can be inspected and rewritten on all three hosts.
-- PNG, JPEG, SVG, ICO, and first-page PDF icon sources produce a valid multi-resolution ICO/PE main icon.
-- The output VERSIONINFO round-trips through the library and a second independent inspector.
+- PNG, JPEG, and ICO sources produce a valid multi-resolution ICO/PE main icon without implicit cropping.
+- The output VERSIONINFO and main icon are verified by Windows APIs or an inspector independent of `editpe`.
 - Signed inputs are rejected by default and the error explains why.
-- `--dry-run` produces a stable JSON diff without writing.
-- A Codex Skill can complete the documented workflow without reading project-specific source code.
+- A real Authenticode-signed fixture is valid before editing and independently reported invalid or unsigned after an explicitly authorized edit.
+- `plan` produces a machine-readable summary without writing; it is not a stable field-by-field diff.
+- A clean consumer can complete the documented CLI workflow, and a fresh agent can complete the Skill workflow without reading project-specific source code.
+- The exact candidate commit passes hosted native, documentation, and supply-chain checks before the repository claims Alpha maturity.
+- Candidate artifacts include checksums, an SBOM, license evidence, provenance/attestation where available, and protected `v*` tag governance.
 
 ### Stop conditions
 

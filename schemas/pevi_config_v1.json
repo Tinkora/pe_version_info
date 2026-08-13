@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ConfigFile",
+  "type": "object",
+  "properties": {
+    "icon": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/IconConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "input": {
+      "type": "string"
+    },
+    "output": {
+      "type": "string"
+    },
+    "policy": {
+      "$ref": "#/$defs/Policy",
+      "default": {
+        "overwrite_output": false,
+        "preserve_unknown_strings": true
+      }
+    },
+    "schema_version": {
+      "type": "integer",
+      "format": "uint32",
+      "const": 1,
+      "minimum": 0
+    },
+    "version": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/VersionConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "input",
+    "output"
+  ],
+  "$defs": {
+    "IconConfig": {
+      "type": "object",
+      "properties": {
+        "allow_crop": {
+          "type": "boolean",
+          "default": false
+        },
+        "background": {
+          "type": "string",
+          "default": "transparent"
+        },
+        "fit": {
+          "$ref": "#/$defs/IconFit",
+          "default": "contain"
+        },
+        "source": {
+          "type": "string"
+        },
+        "target_sizes": {
+          "type": "array",
+          "default": [
+            16,
+            24,
+            32,
+            48,
+            64,
+            128,
+            256
+          ],
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "maximum": 65535,
+            "minimum": 0
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "source"
+      ]
+    },
+    "IconFit": {
+      "type": "string",
+      "enum": [
+        "contain",
+        "cover"
+      ]
+    },
+    "Policy": {
+      "type": "object",
+      "properties": {
+        "overwrite_output": {
+          "type": "boolean",
+          "default": false
+        },
+        "preserve_unknown_strings": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "VersionConfig": {
+      "type": "object",
+      "properties": {
+        "code_page": {
+          "type": "integer",
+          "format": "uint16",
+          "default": 1200,
+          "maximum": 65535,
+          "minimum": 0
+        },
+        "file_version": {
+          "$ref": "#/$defs/VersionNumber"
+        },
+        "language": {
+          "type": "string",
+          "default": "en-US"
+        },
+        "product_version": {
+          "$ref": "#/$defs/VersionNumber"
+        },
+        "strings": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {}
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "file_version",
+        "product_version"
+      ]
+    },
+    "VersionNumber": {
+      "type": "string"
+    }
+  }
+}

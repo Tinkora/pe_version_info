@@ -8,6 +8,25 @@
 
 **Tech Stack:** Rust 2024, `editpe` for existing PE resource parsing/rebuilding, `clap` for CLI, `serde`/`serde_json`/`toml`/`schemars` for configuration and reports, `image` for raster/ICO, `resvg`/`usvg` for SVG, optional `pdfium-render` plus a pinned PDFium runtime for PDF, MCP SDK/transport selected during the MCP implementation task, GitHub Actions, Codex plugin manifest and Skill.
 
+## 2026-08-13 execution scope
+
+The workspace governance review narrows the first public candidate:
+
+- Complete P00 project intake before implementation; see
+  [`docs/project_intake.md`](../../project_intake.md).
+- Ship a native core/CLI and a Codex Skill draft. Do not copy the Rust/WASM web
+  crate merely because the organization template contains one.
+- Limit default icon inputs to PNG, JPEG, and ICO. SVG and PDF remain follow-up
+  features until their renderer limits, licenses, and target runtime provenance
+  are reproducible.
+- Treat Task 10 (MCP server/UI) as a future optional milestone. A Skill does not
+  make the project Agent-callable.
+- Keep maturity at Draft until the exact pushed commit passes hosted native,
+  documentation, and supply-chain checks. Hosted evidence, not local success,
+  authorizes an Alpha claim.
+- Publish repository history with English Conventional Commits, as required by
+  the workspace-level Tinkora roadmap.
+
 ---
 
 ## Scope and non-negotiable rules
@@ -18,7 +37,9 @@
 - Reject inputs with an Authenticode certificate table by default. Proceed only with two explicit flags and report that the resulting signature is invalid or absent.
 - Preserve unrelated resources and unknown VERSIONINFO strings by default.
 - Accept relative and absolute icon paths. Resolve relative paths from the configuration file directory, not the process working directory.
-- Support PNG, JPEG, ICO, SVG, and PDF page 1 in Alpha. Unknown formats fail with a stable error; “any format” means an extensible input boundary, not an unbounded decoder promise.
+- Support PNG, JPEG, and ICO in the first Alpha candidate. SVG and PDF are
+  follow-up feature gates. Unknown formats fail with a stable error; “any
+  format” means an extensible input boundary, not an unbounded decoder promise.
 - Preserve aspect ratio and do not crop by default. Use transparent letterboxing unless an explicit background or `cover`/`allow_crop` policy is configured.
 - Keep the CLI offline. The plugin may use a verified release cache, but must never download arbitrary URLs supplied by the model.
 - Use JSON output as the machine interface, stable error codes, no TTY prompts in non-interactive mode, and explicit confirmation for destructive writes.
@@ -378,7 +399,9 @@ git commit -F - <<'EOF'
 EOF
 ```
 
-## Task 6: Add SVG and PDF source support behind explicit feature boundaries
+## Follow-up Task 6: Add SVG and PDF behind explicit feature boundaries
+
+This task is outside the first public candidate and does not block Task 7.
 
 **Files:**
 

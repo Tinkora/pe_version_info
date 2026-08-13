@@ -1,6 +1,6 @@
 # Tinkora PE Version Info
 
-> **Status: Idea / L0** — this repository currently contains the product and implementation plan only.
+> **Status: Draft** — the native core/CLI and Draft Codex Skill have passed hosted native, documentation, and supply-chain checks. Alpha still requires independent Windows resource and Authenticode evidence, clean-consumer/Skill acceptance, and complete release-governance evidence.
 
 [简体中文](README.zh-CN.md)
 
@@ -16,20 +16,34 @@
 </p>
 <!-- markdownlint-enable MD033 -->
 
-Cross-platform tooling for inspecting and updating Windows PE `VERSIONINFO`, replacing executable icons, and exposing the workflow to humans and AI agents.
+PE Version Info (`pevi`) inspects and safely updates Windows PE32/PE32+ EXE/DLL `VERSIONINFO` resources and icons on the native host. The core uses `editpe`; the CLI emits one stable JSON object for automation.
 
-The planned product has three layers:
+Current candidate scope:
 
-- `pevi` — a deterministic Rust CLI/library that edits an existing `.exe` or `.dll` on Windows, macOS, and Linux.
-- `pevi` Codex Skill — configuration templates and safe agent instructions for repeatable build pipelines.
-- Optional MCP server/UI — structured inspection, preview, confirmation, and file selection for hosts that support MCP Apps.
+- Native Rust core and `pevi` CLI for `inspect`, `plan`, `apply`, `verify`, `init`, and `convert-icon`.
+- `en-US` / UTF-16LE (`040904B0`) VERSIONINFO, unknown-string preservation, and PNG/JPEG/ICO icon input.
+- Separate output by default, transactional writes, bounded decoding, and explicit two-flag authorization for in-place or certificate-table edits.
+- Draft Codex Skill/plugin orchestration. This does not claim Agent-callable MCP support.
 
-The first implementation should use [`editpe`](https://github.com/Systemcluster/editpe) for cross-platform PE resource parsing and rebuilding. [`winresource`](https://github.com/BenjaminRi/winresource) is useful for build-time resources in Rust applications, but is not the primary engine for modifying arbitrary existing executables.
+SVG, PDF, MCP/UI, and manual Explorer UI review are follow-up scope. Alpha still requires independent Windows API or inspector evidence for resources and Authenticode. Do not use the Draft candidate for signed release binaries without the documented sign-after-verify pipeline.
 
-This is not yet a production tool. Do not use it to modify signed release binaries until signature invalidation, backup, atomic replacement, and post-write verification are implemented and tested.
+## Quick start
 
-## Plan
+```bash
+cargo build --locked --release -p pevi_cli
+target/release/pevi --help
+target/release/pevi inspect --input fixtures/pe32_unsigned.exe --format json
+```
 
-The detailed implementation plan is in [`docs/superpowers/plans/2026_08_13_pe_version_info.md`](docs/superpowers/plans/2026_08_13_pe_version_info.md).
+Read [configuration](docs/configuration.md), [security and compatibility](docs/security_and_compatibility.md), and [releasing](docs/RELEASING.md) before mutation.
 
-Architecture decisions and research are in [`docs/decisions/`](docs/decisions/).
+## Development
+
+```bash
+cargo fmt --all -- --check
+cargo test --workspace --locked
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo deny check advisories bans licenses sources
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [SUPPORT.md](SUPPORT.md), and [CHANGELOG.md](CHANGELOG.md).

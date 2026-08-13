@@ -8,4 +8,13 @@ This repository is a Rust CLI/library and Codex plugin project for Windows PE re
 - Keep image conversion deterministic and lossless by default: preserve aspect ratio, do not crop, use the first PDF page, and record the source format and renderer in the report.
 - Keep public documentation in English with a complete Chinese counterpart where the repository standard requires it.
 - Add regression tests for every parser, resource, path, security, and output behavior change.
-- Use Chinese commit messages unless a repository-local rule explicitly requires another language.
+
+## Commit Language
+
+- Write commit subjects and bodies in English and follow Conventional Commits.
+- This repository-level rule overrides any global preference for another commit-message language.
+
+## Public Source Language
+
+- Write new public code comments in English.
+- Keep public documentation in English with a complete Chinese counterpart where required.
