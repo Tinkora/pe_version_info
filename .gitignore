@@ -1,6 +1,7 @@
 /target/
 /dist/
 /output/
+/.worktrees/
 *.bak
 *.tmp
 .DS_Store
