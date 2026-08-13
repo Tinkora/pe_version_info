@@ -4,6 +4,8 @@
 
 [简体中文](README.zh-CN.md)
 
+[![Support Tinkora on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/tinkora)
+
 Cross-platform tooling for inspecting and updating Windows PE `VERSIONINFO`, replacing executable icons, and exposing the workflow to humans and AI agents.
 
 The planned product has three layers:

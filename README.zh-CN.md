@@ -4,6 +4,8 @@
 
 [English](README.md)
 
+[![在 Ko-fi 上支持 Tinkora](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/tinkora)
+
 一个面向 Windows PE 文件的跨平台工具规划：读取和修改 EXE/DLL 的 `VERSIONINFO`，替换程序图标，并将整个流程提供给人类用户和 AI Agent 使用。
 
 规划中的产品分为三层：
