@@ -700,4 +700,3 @@ EOF
 Implement Tasks 1–4 first to produce a useful read-only/version-only CLI. Tasks 5–7 add icon and safe mutation behavior. Task 8 turns the core into a CI-ready interface. Task 9 packages the Codex Skill. Task 10 is optional and should not block CLI/Skill release. Tasks 11–12 are required before calling the project Alpha.
 
 The next agent should begin with Task 1, create a local branch or worktree, and commit each completed task. It must not start with the MCP UI: the CLI/core contract is the dependency for every higher-level surface.
-

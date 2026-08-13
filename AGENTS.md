@@ -9,4 +9,3 @@ This repository is a Rust CLI/library and Codex plugin project for Windows PE re
 - Keep public documentation in English with a complete Chinese counterpart where the repository standard requires it.
 - Add regression tests for every parser, resource, path, security, and output behavior change.
 - Use Chinese commit messages unless a repository-local rule explicitly requires another language.
-

@@ -96,4 +96,3 @@ The plugin bundle is distribution metadata and instructions. The Rust crates rem
 - Explicit renderer version and icon target sizes in the report.
 - No network access in the CLI.
 - Input paths resolved before execution and recorded as normalized paths only when the user requests verbose diagnostics; reports must not leak unrelated directory contents.
-

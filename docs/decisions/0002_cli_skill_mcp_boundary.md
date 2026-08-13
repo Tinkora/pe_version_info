@@ -1,6 +1,6 @@
 # ADR 0002: CLI First, Skill as Guidance, MCP/UI as Optional
 
-Date: 2026-08-13  
+Date: 2026-08-13
 Status: Accepted for implementation planning
 
 ## Context
@@ -16,4 +16,3 @@ Make the Rust CLI/library the normative interface. Ship a Codex Skill that orche
 - CI and local agents share one behavior and one error vocabulary.
 - UI can improve inspection and confirmation without becoming a required runtime.
 - File upload support is capability-detected, not promised universally.
-

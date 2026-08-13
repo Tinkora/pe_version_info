@@ -1,6 +1,6 @@
 # ADR 0003: Reject Signed Inputs and Do Not Crop Icons by Default
 
-Date: 2026-08-13  
+Date: 2026-08-13
 Status: Accepted for implementation planning
 
 ## Context
@@ -16,4 +16,3 @@ Reject signed inputs by default and require explicit acknowledgement to proceed.
 - The normal pipeline becomes “build → pevi apply/verify → sign”, which avoids stale signatures.
 - Product logos retain their source composition unless the user deliberately requests cropping.
 - Generated ICOs may contain transparent margins for non-square sources, which is an intentional and inspectable result.
-

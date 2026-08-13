@@ -1,7 +1,7 @@
 # Tinkora PE Version Info 产品规格
 
-状态：Idea / L0  
-日期：2026-08-13  
+状态：Idea / L0
+日期：2026-08-13
 仓库：<https://github.com/Tinkora/pe_version_info>
 
 ## 1. 要解决的问题
@@ -66,4 +66,3 @@ ChatGPT/Codex 自定义 UI 运行在 MCP Apps iframe 中。文件选择/上传�
 Alpha 阶段至少完成：三平台构建；三平台读写 fixture EXE；PNG/JPEG/SVG/ICO/PDF 图标转换；VERSIONINFO 往返验证；默认拒绝已签名输入；稳定 JSON dry-run；Agent 可只依赖 Skill 完成流程。
 
 如果某种格式需要大型原生运行时、存在不清晰的再分发权利或渲染不确定，应停止扩展格式矩阵，保留明确支持列表并给出转换建议。
-

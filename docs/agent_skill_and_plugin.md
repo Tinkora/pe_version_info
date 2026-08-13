@@ -78,4 +78,3 @@ The future manifest should use the current plugin schema:
 ```
 
 The actual manifest should be generated/validated by the official `plugin-creator` workflow when implementation starts. Do not publish this example as an installable plugin before the binary and Skill are tested together.
-

@@ -53,4 +53,3 @@ The UI should keep business data in tool results and ephemeral checkbox/form sta
 ## 5. Host limitations
 
 ChatGPT/Codex plugin UI is not the same as a native Windows/macOS dialog. It is an MCP Apps component in an iframe. It can provide a polished form and file interaction where the host supports the corresponding bridge, but it cannot guarantee access to arbitrary local files or native OS dialogs on every client. The product must preserve a CLI-first path.
-

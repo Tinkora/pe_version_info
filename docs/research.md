@@ -38,4 +38,3 @@ The language identifier page warns that numeric language identifier constants ar
 - Optional MCP UI: <https://developers.openai.com/plugins/build/chatgpt-ui>
 
 The official documentation describes plugins as bundles of Skills, connectors, MCP servers, and optional UI. Custom UI is an MCP Apps iframe and must retain a non-UI tool path. File-selection/upload methods are host extensions and therefore require feature detection and fallback behavior.
-

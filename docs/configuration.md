@@ -132,4 +132,3 @@ Every command using `--format json` emits one JSON object with:
 ```
 
 Error objects use stable `code`, a human message, and a safe `details` object. Details must not contain access tokens, full environment dumps, or unrelated directory listings.
-

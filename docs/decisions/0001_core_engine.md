@@ -1,6 +1,6 @@
 # ADR 0001: Use `editpe` for Existing PE Mutation
 
-Date: 2026-08-13  
+Date: 2026-08-13
 Status: Accepted for implementation planning
 
 ## Context
@@ -17,4 +17,3 @@ Use `editpe` as the primary parser/rebuilder for existing PE resources. Keep VER
 - The project owns compatibility tests against fixture PE files.
 - The dependency is newer and smaller than mature GUI editors, so pin versions and maintain fixtures.
 - `winresource` remains a documented build-time alternative, not a runtime editor.
-

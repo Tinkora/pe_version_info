@@ -1,7 +1,7 @@
 # Tinkora PE Version Info Product Specification
 
-Status: Idea / L0  
-Date: 2026-08-13  
+Status: Idea / L0
+Date: 2026-08-13
 Repository: <https://github.com/Tinkora/pe_version_info>
 
 ## 1. Problem
@@ -100,4 +100,3 @@ Stop expanding the format matrix if a format cannot be supported without a large
 The first stable schema version is `1`. Breaking changes to configuration keys, CLI JSON, MCP tool names, or error codes require schema version `2` or a major release.
 
 The tool must preserve all unrelated resources unless the config explicitly requests removal. It must preserve the original file when output is a separate path and must use an atomic temporary-write/rename sequence for replacement.
-

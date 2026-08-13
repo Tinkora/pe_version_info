@@ -48,4 +48,3 @@ target_sizes = [16, 24, 32, 48, 64, 128, 256]
 `init` 生成模板；`inspect` 只读检查；`plan` 只解析并展示将要变化；`apply` 执行写入；`verify` 写后校验；`convert-icon` 只转换图标源文件。
 
 所有 JSON 输出都带 `schema_version`、输入/输出 SHA-256、变更字段、签名状态、警告和稳定错误码。
-

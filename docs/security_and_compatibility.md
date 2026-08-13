@@ -56,4 +56,3 @@ Windows-specific visual verification remains required on a Windows runner or VM.
 - Record licenses and binary provenance for PDFium, `resvg`, `image`, and `editpe`.
 - Do not download tools during a normal `apply` invocation.
 - Release builds should use GitHub Actions with least-privilege permissions and artifact provenance where available.
-
