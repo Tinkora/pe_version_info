@@ -1,6 +1,6 @@
 # Tinkora PE Version Info 产品规格
 
-状态：Draft
+状态：Alpha CLI / Draft Codex Skill
 日期：2026-08-13
 仓库：<https://github.com/Tinkora/pe_version_info>
 
@@ -63,7 +63,7 @@ ChatGPT/Codex 自定义 UI 运行在 MCP Apps iframe 中。文件选择/上传�
 
 ## 5. 成功标准
 
-Alpha 阶段至少完成：三平台构建；三平台读写 fixture EXE；PNG/JPEG/ICO 图标转换且不隐式裁切；使用独立于 `editpe` 的 Windows API 或检查器验证 VERSIONINFO 和主图标；真实 Authenticode fixture 在修改前有效，并在显式授权修改后由独立工具报告为失效或无签名；默认拒绝已签名输入；机器可读的 `plan` 摘要；干净消费环境完成 CLI 流程，fresh agent 无需阅读项目源码即可完成 Skill 流程；准确候选 commit 的托管 native、文档和供应链检查全部通过；候选产物包含 checksum、SBOM、许可证证据、可用的 provenance/attestation 和受保护的 `v*` tag 治理。
+Alpha 阶段至少完成：三平台构建；三平台读写 fixture EXE；PNG/JPEG/ICO 图标转换且不隐式裁切；使用独立于 `editpe` 的 Windows API 或检查器验证 VERSIONINFO 和主图标；真实 Authenticode fixture 在修改前具有完整摘要并通过自定义测试链验证，显式授权修改后由独立 Windows API 报告重建输出不再含签名，且测试不修改系统信任存储；默认拒绝已签名输入；机器可读的 `plan` 摘要；干净消费环境完成 CLI 流程，fresh agent 无需阅读项目源码即可完成 Skill 流程；准确候选 commit 的托管 native、文档和供应链检查全部通过；候选产物包含 checksum、SBOM、许可证证据、可用的 provenance/attestation 和受保护的 `v*` tag 治理。
 
 如果某种格式需要大型原生运行时、存在不清晰的再分发权利或渲染不确定，应停止扩展格式矩阵，保留明确支持列表并给出转换建议。
 

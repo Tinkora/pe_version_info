@@ -97,7 +97,7 @@ The config remains authoritative; command-line output/policy flags are explicit 
 pevi verify --input <path> [--config <path>] [--format human|json]
 ```
 
-Checks that the file is parseable, requested values match, and the icon is valid. PE parsing only reports whether a certificate table is present; it does not validate Authenticode trust. Use the independent Windows verification workflow for signature validity.
+Checks that the file is parseable, requested values match, and the icon is valid. PE parsing only reports whether a certificate table is present; it does not validate Authenticode trust or digests. The independent Windows workflow verifies the pre-edit digest and test chain, then proves that the rebuilt output has no signature without changing system trust stores.
 
 ### `convert-icon`
 

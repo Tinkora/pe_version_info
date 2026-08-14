@@ -1,17 +1,28 @@
-name: Release candidate build
+name: Release
 
 on:
+  push:
+    tags: ['v*.*.*']
   workflow_dispatch:
     inputs:
-      version:
-        description: SemVer candidate version
+      release_tag:
+        description: Protected v-prefixed SemVer tag to publish
         required: true
         type: string
+
 permissions:
   contents: read
+
+concurrency:
+  group: release-${{ github.repository }}-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+
 jobs:
   validate:
-    name: Validate candidate version
+    name: Validate protected release tag
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -20,18 +31,15 @@ jobs:
         env:
           RELEASE_REF: ${{ github.ref }}
           RELEASE_REF_PROTECTED: ${{ github.ref_protected }}
-          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
           set -euo pipefail
-          if [[ "${RELEASE_REF}" == "refs/heads/main" ]]; then
-            exit 0
-          fi
-          if [[ "${RELEASE_REF}" != "refs/tags/${RELEASE_VERSION}" ]]; then
-            echo "release candidates must run from main or the matching version tag" >&2
+          if [[ "${RELEASE_REF}" != "refs/tags/${RELEASE_TAG}" ]]; then
+            echo "releases must run from the matching version tag" >&2
             exit 1
           fi
           if [[ "${RELEASE_REF_PROTECTED}" != "true" ]]; then
-            echo "release candidate tags must be protected by repository rules" >&2
+            echo "release tags must be protected by repository rules" >&2
             exit 1
           fi
       - name: Check out repository
@@ -40,8 +48,8 @@ jobs:
           persist-credentials: false
       - name: Match candidate version to the workspace
         env:
-          RELEASE_VERSION: ${{ inputs.version }}
-        run: python scripts/validate_release_version.py "$RELEASE_VERSION"
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+        run: python scripts/validate_release_version.py "$RELEASE_TAG"
 
   build:
     name: Build ${{ matrix.target }}
@@ -71,33 +79,33 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         env:
-          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
           set -euo pipefail
           mkdir -p dist
           package_root="$(mktemp -d)"
           verification_root="$(mktemp -d)"
           trap 'rm -rf -- "${package_root}" "${verification_root}"' EXIT
-          artifact="dist/pevi-${RELEASE_VERSION}-${{ matrix.target }}.tar.gz"
+          artifact="dist/pevi-${RELEASE_TAG}-${{ matrix.target }}.tar.gz"
           install -m 0755 "target/${{ matrix.target }}/release/pevi" "${package_root}/pevi"
           tar -C "${package_root}" -czf "$artifact" pevi
           tar -C "${verification_root}" -xzf "$artifact"
           test -x "${verification_root}/pevi"
-          shasum -a 256 "$artifact" > "${artifact}.sha256"
+          (cd dist && shasum -a 256 "$(basename "$artifact")" > "$(basename "$artifact").sha256")
       - name: Package and checksum (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         env:
-          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          $artifact = "dist/pevi-$env:RELEASE_VERSION-${{ matrix.target }}.exe"
+          $artifact = "dist/pevi-$env:RELEASE_TAG-${{ matrix.target }}.exe"
           Copy-Item "target/${{ matrix.target }}/release/pevi.exe" $artifact
           (Get-FileHash $artifact -Algorithm SHA256).Hash.ToLower() + "  $(Split-Path $artifact -Leaf)" | Out-File -Encoding ascii "$artifact.sha256"
       - name: Upload candidate artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: pevi-${{ inputs.version }}-${{ matrix.target }}
+          name: pevi-${{ env.RELEASE_TAG }}-${{ matrix.target }}
           path: dist/
           if-no-files-found: error
   evidence:
@@ -123,14 +131,14 @@ jobs:
       - name: Download candidate artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          pattern: pevi-${{ inputs.version }}-*
+          pattern: pevi-${{ env.RELEASE_TAG }}-*
           path: dist
           merge-multiple: true
 
       - name: Generate aggregate checksums, SBOM, and license evidence
         shell: bash
         env:
-          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
           for target in \
             x86_64-unknown-linux-gnu \
@@ -150,7 +158,7 @@ jobs:
             --metadata aarch64-apple-darwin=artifacts.cargo-metadata-aarch64-apple-darwin.json \
             --metadata x86_64-pc-windows-msvc=artifacts.cargo-metadata-x86_64-pc-windows-msvc.json \
             --repository "${GITHUB_REPOSITORY}" \
-            --version "${RELEASE_VERSION}" \
+            --version "${RELEASE_TAG#v}" \
             --revision "${GITHUB_SHA}" \
             --created "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
@@ -168,10 +176,86 @@ jobs:
       - name: Upload aggregate release evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: pevi-${{ inputs.version }}-release-evidence
+          name: pevi-${{ env.RELEASE_TAG }}-release-evidence
           path: |
             dist/SHA256SUMS
             dist/THIRD_PARTY_NOTICES.md
             dist/license_inventory.json
             dist/sbom.spdx.json
           if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: evidence
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - name: Check out tagged commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download build and evidence artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: pevi-${{ env.RELEASE_TAG }}-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Verify release assets and tag binding
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse --verify "refs/tags/${RELEASE_TAG}^{commit}")" == "${GITHUB_SHA}" ]] || {
+            echo "release tag changed during the workflow" >&2
+            exit 1
+          }
+          (cd release-assets && sha256sum --check --strict -- ./*.sha256)
+          (cd release-assets && sha256sum --check --strict SHA256SUMS)
+          [[ "$(find release-assets -maxdepth 1 -type f | wc -l | tr -d ' ')" == "10" ]] || {
+            echo "expected three target binaries or archives, three per-asset checksums, and four release evidence files" >&2
+            exit 1
+          }
+
+      - name: Create draft GitHub Release
+        id: create_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="$(cat CHANGELOG.md)
+
+          中文说明：请参阅 [中文 README](https://github.com/${GH_REPO}/blob/${RELEASE_TAG}/README.zh-CN.md) 和 [中文发布流程](https://github.com/${GH_REPO}/blob/${RELEASE_TAG}/docs/RELEASING.zh-CN.md)。"
+          release_id="$(gh api --method POST "repos/${GH_REPO}/releases" \
+            -f tag_name="${RELEASE_TAG}" \
+            -f target_commitish="${GITHUB_SHA}" \
+            -f name="PE Version Info ${RELEASE_TAG}" \
+            -f body="${body}" \
+            -F draft=true \
+            -F prerelease=true \
+            --jq '.id')"
+          echo "release_id=${release_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload verified assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+        run: gh release upload "${RELEASE_TAG}" release-assets/* --repo "${GH_REPO}" --clobber
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_ID: ${{ steps.create_release.outputs.release_id }}
+        run: gh api --method PATCH "repos/${GH_REPO}/releases/${RELEASE_ID}" -F draft=false -F prerelease=true

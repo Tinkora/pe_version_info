@@ -1,6 +1,6 @@
 {
   "name": "pe-version-info",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Draft Codex workflow for safely inspecting and updating Windows PE VERSIONINFO and icons with the pevi CLI.",
   "author": {
     "name": "Tinkora",

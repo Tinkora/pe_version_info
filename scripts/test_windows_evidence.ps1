@@ -224,42 +224,6 @@ function Remove-CodeSigningCertificate {
     }
 }
 
-function Add-TrustedSigningCertificate {
-    param([Parameter(Mandatory = $true)]$Certificate)
-
-    $store = [System.Security.Cryptography.X509Certificates.X509Store]::new(
-        [System.Security.Cryptography.X509Certificates.StoreName]::TrustedPublisher,
-        [System.Security.Cryptography.X509Certificates.StoreLocation]::CurrentUser
-    )
-    try {
-        $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-        $store.Add($Certificate)
-    } finally {
-        $store.Dispose()
-    }
-}
-
-function Remove-TrustedSigningCertificate {
-    param([Parameter(Mandatory = $true)][string]$Thumbprint)
-
-    $store = [System.Security.Cryptography.X509Certificates.X509Store]::new(
-        [System.Security.Cryptography.X509Certificates.StoreName]::TrustedPublisher,
-        [System.Security.Cryptography.X509Certificates.StoreLocation]::CurrentUser
-    )
-    try {
-        $store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-        foreach ($matching in $store.Certificates.Find(
-            [System.Security.Cryptography.X509Certificates.X509FindType]::FindByThumbprint,
-            $Thumbprint,
-            $false
-        )) {
-            $store.Remove($matching)
-        }
-    } finally {
-        $store.Dispose()
-    }
-}
-
 function Assert-CodeSigningCertificateChain {
     param(
         [Parameter(Mandatory = $true)]$Leaf,
@@ -311,9 +275,89 @@ using System.Security.Cryptography.X509Certificates;
 
 public static class PeviNativeIcon
 {
+    public const uint CERT_E_UNTRUSTEDROOT = 0x800B0109u;
+    public const uint CERT_E_CHAINING = 0x800B010Au;
+    public const uint TRUST_E_NOSIGNATURE = 0x800B0100u;
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct WinTrustFileInfo
+    {
+        public uint StructSize;
+        [MarshalAs(UnmanagedType.LPWStr)]
+        public string FilePath;
+        public IntPtr FileHandle;
+        public IntPtr KnownSubject;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct WinTrustData
+    {
+        public uint StructSize;
+        public IntPtr PolicyCallbackData;
+        public IntPtr SipClientData;
+        public uint UiChoice;
+        public uint RevocationChecks;
+        public uint UnionChoice;
+        public IntPtr FileInfo;
+        public uint StateAction;
+        public IntPtr StateData;
+        public IntPtr UrlReference;
+        public uint ProviderFlags;
+        public uint UiContext;
+    }
+
+    [DllImport("wintrust.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+    private static extern uint WinVerifyTrust(
+        IntPtr window,
+        ref Guid actionId,
+        ref WinTrustData trustData);
+
     public static X509Certificate2 AttachPrivateKey(X509Certificate2 certificate, RSA key)
     {
         return certificate.CopyWithPrivateKey(key);
+    }
+
+    public static uint VerifyAuthenticode(string fileName)
+    {
+        var fileInfo = new WinTrustFileInfo
+        {
+            StructSize = (uint)Marshal.SizeOf(typeof(WinTrustFileInfo)),
+            FilePath = fileName,
+            FileHandle = IntPtr.Zero,
+            KnownSubject = IntPtr.Zero
+        };
+        IntPtr fileInfoPointer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(WinTrustFileInfo)));
+        bool fileInfoWritten = false;
+        try
+        {
+            Marshal.StructureToPtr(fileInfo, fileInfoPointer, false);
+            fileInfoWritten = true;
+            var trustData = new WinTrustData
+            {
+                StructSize = (uint)Marshal.SizeOf(typeof(WinTrustData)),
+                PolicyCallbackData = IntPtr.Zero,
+                SipClientData = IntPtr.Zero,
+                UiChoice = 2,
+                RevocationChecks = 0,
+                UnionChoice = 1,
+                FileInfo = fileInfoPointer,
+                StateAction = 0,
+                StateData = IntPtr.Zero,
+                UrlReference = IntPtr.Zero,
+                ProviderFlags = 0x00001010,
+                UiContext = 0
+            };
+            var actionId = new Guid("00AAC56B-CD44-11d0-8CC2-00C04FC295EE");
+            return WinVerifyTrust(IntPtr.Zero, ref actionId, ref trustData);
+        }
+        finally
+        {
+            if (fileInfoWritten)
+            {
+                Marshal.DestroyStructure(fileInfoPointer, typeof(WinTrustFileInfo));
+            }
+            Marshal.FreeHGlobal(fileInfoPointer);
+        }
     }
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
@@ -363,7 +407,6 @@ $generatedCertificate = $null
 $rootCertificate = $null
 $signingCertificate = $null
 $codeSigningCertificateThumbprint = $null
-$trustedSigningCertificateThumbprint = $null
 New-Item -ItemType Directory -Path $temporaryRoot | Out-Null
 
 try {
@@ -405,7 +448,7 @@ target_sizes = [16, 32, 48, 256]
     $initialNativeVersion = Get-NativeVersion $initialExe "1.2.3.4" "5.6.7.8" "Tinkora PEVI Initial"
     $initialIconEvidence = Get-NativeIconEvidence $initialExe
 
-    Write-Host "Windows evidence phase: create trusted signing certificate"
+    Write-Host "Windows evidence phase: create signing certificate"
     $signedExe = Join-Path $temporaryRoot "signed-existing-icon.exe"
     Copy-Item -LiteralPath $initialExe -Destination $signedExe
     $certificateChain = New-CodeSigningCertificate
@@ -416,12 +459,22 @@ target_sizes = [16, 32, 48, 256]
     $signingCertificate = Install-CodeSigningCertificate $generatedCertificate
     Assert-Condition $signingCertificate.HasPrivateKey "installed signing certificate has no private key"
     $codeSigningCertificateThumbprint = $signingCertificate.Thumbprint
-    Write-Host "Windows evidence phase: trust signing certificate"
-    Add-TrustedSigningCertificate $signingCertificate
-    $trustedSigningCertificateThumbprint = $signingCertificate.Thumbprint
-    Write-Host "Windows evidence phase: sign EXE and verify pre-edit trust"
+    Write-Host "Windows evidence phase: sign without mutating trust stores"
     $signingResult = Set-AuthenticodeSignature -FilePath $signedExe -Certificate $signingCertificate -HashAlgorithm SHA256
     $beforeEditSignature = Get-AuthenticodeSignature -FilePath $signedExe
+    $beforeEditWinTrust = [PeviNativeIcon]::VerifyAuthenticode($signedExe)
+    Assert-Condition ($beforeEditSignature.Status -eq "UnknownError") (
+        "PowerShell did not report the expected untrusted-root status before the resource edit: " +
+        "status=$($beforeEditSignature.Status) status_message=$($beforeEditSignature.StatusMessage)"
+    )
+    $beforeEditTrustFailures = @(
+        [PeviNativeIcon]::CERT_E_UNTRUSTEDROOT,
+        [PeviNativeIcon]::CERT_E_CHAINING
+    )
+    Assert-Condition ($beforeEditTrustFailures -contains $beforeEditWinTrust) (
+        "WinVerifyTrust did not report an expected untrusted-chain failure before the resource edit: " +
+        ("status=0x{0:X8}" -f $beforeEditWinTrust)
+    )
     Assert-Condition ($beforeEditSignature.SignerCertificate.Thumbprint -eq $signingCertificate.Thumbprint) (
         "Authenticode signer certificate was not embedded: " +
         "set_status=$($signingResult.Status) set_message=$($signingResult.StatusMessage)"
@@ -465,7 +518,15 @@ target_sizes = [16, 32, 48, 256]
     Assert-Condition ($mutated.data.signature.signature_invalidated_by_edit -eq $true) "apply did not report signature invalidation"
     [void](Assert-PeviSuccess (Invoke-Pevi @("verify", "--input", $mutatedExe, "--config", $signedConfig, "--format", "json")))
     $afterEditSignature = Get-AuthenticodeSignature -FilePath $mutatedExe
-    Assert-Condition ($afterEditSignature.Status -ne "Valid") "resource edit unexpectedly retained a valid Authenticode signature"
+    $afterEditWinTrust = [PeviNativeIcon]::VerifyAuthenticode($mutatedExe)
+    Assert-Condition ($afterEditSignature.Status -eq "NotSigned") (
+        "resource edit did not remove the Authenticode signature as expected: " +
+        "status=$($afterEditSignature.Status) status_message=$($afterEditSignature.StatusMessage)"
+    )
+    Assert-Condition ($afterEditWinTrust -eq [PeviNativeIcon]::TRUST_E_NOSIGNATURE) (
+        "WinVerifyTrust did not report the expected absent post-edit signature: " +
+        ("status=0x{0:X8}" -f $afterEditWinTrust)
+    )
     $mutatedNativeVersion = Get-NativeVersion $mutatedExe "9.8.7.6" "5.4.3.2" "Tinkora PEVI Mutated"
     $mutatedIconEvidence = Get-NativeIconEvidence $mutatedExe
 
@@ -512,7 +573,13 @@ ProductName = "Tinkora PEVI DLL"
         authenticode = [ordered]@{
             before_edit = $beforeEditSignature.Status.ToString()
             after_edit = $afterEditSignature.Status.ToString()
+            before_edit_winverifytrust = ("0x{0:X8}" -f $beforeEditWinTrust)
+            after_edit_winverifytrust = ("0x{0:X8}" -f $afterEditWinTrust)
+            before_edit_digest_intact = $true
             before_edit_custom_chain_valid = $true
+            before_edit_system_trusted = $false
+            after_edit_signature_absent = $true
+            trust_store_mutated = $false
             default_rejected = $true
             partial_acknowledgement_rejected = $true
             explicit_override_required = $true
@@ -532,9 +599,6 @@ ProductName = "Tinkora PEVI DLL"
     $evidence | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $EvidencePath -Encoding utf8NoBOM
     Write-Host "Windows native evidence passed: $EvidencePath"
 } finally {
-    if ($null -ne $trustedSigningCertificateThumbprint) {
-        Remove-TrustedSigningCertificate $trustedSigningCertificateThumbprint
-    }
     if ($null -ne $codeSigningCertificateThumbprint) {
         Remove-CodeSigningCertificate $codeSigningCertificateThumbprint
     }

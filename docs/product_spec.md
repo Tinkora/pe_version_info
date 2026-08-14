@@ -1,6 +1,6 @@
 # Tinkora PE Version Info Product Specification
 
-Status: Draft
+Status: Alpha CLI / Draft Codex Skill
 Date: 2026-08-13
 Repository: <https://github.com/Tinkora/pe_version_info>
 
@@ -88,7 +88,7 @@ ChatGPT/Codex custom UI is an MCP Apps resource rendered in an iframe; local fil
 - PNG, JPEG, and ICO sources produce a valid multi-resolution ICO/PE main icon without implicit cropping.
 - The output VERSIONINFO and main icon are verified by Windows APIs or an inspector independent of `editpe`.
 - Signed inputs are rejected by default and the error explains why.
-- A real Authenticode-signed fixture is valid before editing and independently reported invalid or unsigned after an explicitly authorized edit.
+- A real Authenticode-signed fixture has an intact digest and a custom-validated test chain before editing, then independent Windows APIs report that the rebuilt output has no signature after an explicitly authorized edit without mutating system trust stores.
 - `plan` produces a machine-readable summary without writing; it is not a stable field-by-field diff.
 - A clean consumer can complete the documented CLI workflow, and a fresh agent can complete the Skill workflow without reading project-specific source code.
 - The exact candidate commit passes hosted native, documentation, and supply-chain checks before the repository claims Alpha maturity.

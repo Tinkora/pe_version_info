@@ -1,6 +1,6 @@
 # Tinkora PE Version Info
 
-> **状态：Draft**——native core/CLI 和 Draft Codex Skill 已通过托管 native、文档和供应链检查；Alpha 仍需独立 Windows 资源与 Authenticode 证据、干净消费环境/Skill 验收，以及完整发布治理证据。
+> **状态：Alpha CLI prerelease（`v0.1.0-alpha.2`）**——native CLI 已通过三平台、干净消费环境、Windows 资源和 Authenticode 证据；Codex Skill/plugin 仍是 Draft，不是 Agent-callable MCP 发布物。
 
 [English](README.md)
 
@@ -37,6 +37,28 @@ target/release/pevi inspect --input fixtures/pe32_unsigned.exe --format json
 
 执行修改前请阅读[配置](docs/configuration.zh-CN.md)、[安全与兼容性](docs/security_and_compatibility.zh-CN.md)和[发布流程](docs/RELEASING.zh-CN.md)。
 
+## 安装发布二进制
+
+[最新 prerelease](https://github.com/Tinkora/pe_version_info/releases) 提供
+Linux x86-64、macOS Apple Silicon 和 Windows x86-64 归档。下载归档及对应的
+`.sha256` 文件，校验后再把 `pevi` 放入 `PATH`：
+
+```bash
+gh release download v0.1.0-alpha.2 \
+  --repo Tinkora/pe_version_info \
+  --pattern 'pevi-v0.1.0-alpha.2-*' \
+  --dir release-assets
+cd release-assets
+sha256sum --check --strict ./*.sha256
+tar -xzf pevi-v0.1.0-alpha.2-x86_64-unknown-linux-gnu.tar.gz
+install -m 0755 pevi "$HOME/.local/bin/pevi"
+pevi --version
+```
+
+Windows 用户请使用 `Get-FileHash` 校验 `.exe.sha256`，再把可执行文件放到用户
+拥有且已加入 `PATH` 的目录。发布资产还包含 `SHA256SUMS`、SPDX SBOM、许可证证据
+和 GitHub attestations；完整命令见[发布流程](docs/RELEASING.zh-CN.md)。
+
 ## 开发检查
 
 ```bash
@@ -46,4 +68,5 @@ cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo deny check advisories bans licenses sources
 ```
 
-另请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)、[SECURITY.md](SECURITY.md)、[SUPPORT.md](SUPPORT.md) 和 [CHANGELOG.md](CHANGELOG.md)。
+另请阅读 [贡献指南](CONTRIBUTING.zh-CN.md)、[安全政策](SECURITY.zh-CN.md)、
+[支持说明](SUPPORT.zh-CN.md) 和 [变更日志](CHANGELOG.md)。

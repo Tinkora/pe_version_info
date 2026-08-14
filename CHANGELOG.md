@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+No changes yet.
+
+## [0.1.0-alpha.2] - 2026-08-14
+
 ### Fixed
 
 - Reject no-op apply requests and reserved version-string overrides before writing.
@@ -24,3 +28,13 @@ All notable changes to this project will be documented in this file.
 - Plans expose icon policy and signature consequences; authorized signed edits emit an explicit Authenticode warning.
 
 - Release SBOM and license evidence now cover only the `pevi_cli` normal/build dependency closure for released targets, exclude development-only crates, and embed the selected packages' actual license and notice texts.
+
+- Release assets are now produced only from protected version tags and published with checksums, SPDX evidence, and GitHub attestations.
+- Windows acceptance now proves an Authenticode digest is intact with a custom-validated test chain before a resource edit and reports that the rebuilt output has no signature afterward, without mutating system trust stores.
+
+## [0.1.0-alpha.1] - 2026-08-13
+
+### Initial scope
+
+- Initial cross-platform `pevi` CLI candidate for inspecting and updating PE VERSIONINFO and icons.
+- Draft Codex Skill/plugin scaffold and bilingual documentation.

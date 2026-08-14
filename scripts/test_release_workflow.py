@@ -25,15 +25,25 @@ class ReleaseWorkflowTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.workflow = WORKFLOW.read_text(encoding="utf-8")
 
-    def test_validate_rejects_untrusted_source_refs_before_building(self) -> None:
+    def test_validate_requires_a_protected_matching_tag_before_building(self) -> None:
         validate = job_block(self.workflow, "validate")
         build = job_block(self.workflow, "build")
 
-        self.assertIn("refs/heads/main", validate)
-        self.assertIn('refs/tags/${RELEASE_VERSION}', validate)
+        self.assertNotIn("refs/heads/main", validate)
+        self.assertIn('refs/tags/${RELEASE_TAG}', validate)
         self.assertIn("github.ref_protected", validate)
         self.assertIn("RELEASE_REF_PROTECTED", validate)
+        self.assertNotIn("run from main", validate)
         self.assertIn("needs: validate", build)
+
+    def test_release_trigger_and_publish_job_are_present(self) -> None:
+        self.assertIn("tags: ['v*.*.*']", self.workflow)
+        release = job_block(self.workflow, "release")
+        self.assertIn("needs: evidence", release)
+        self.assertRegex(release, r"(?m)^    permissions:\n      contents: write$")
+        self.assertIn("gh api --method POST", release)
+        self.assertIn("-F draft=true", release)
+        self.assertIn("-F draft=false", release)
 
     def test_privileged_evidence_job_uses_release_environment(self) -> None:
         evidence = job_block(self.workflow, "evidence")
@@ -47,6 +57,7 @@ class ReleaseWorkflowTests(unittest.TestCase):
             "validate": range(1, 11),
             "build": range(10, 61),
             "evidence": range(5, 31),
+            "release": range(5, 31),
         }
 
         for job_name, allowed in allowed_ranges.items():
@@ -63,6 +74,7 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertRegex(build, r"tar .*-czf")
         self.assertRegex(build, r"tar .*-xzf")
         self.assertRegex(build, r'test -x "\$\{[^}]+\}[^"\n]*/pevi"')
+        self.assertIn('(cd dist && shasum -a 256', build)
 
     def test_attestation_guides_bind_source_ref_and_commit_digest(self) -> None:
         for relative_path in ("docs/RELEASING.md", "docs/RELEASING.zh-CN.md"):
@@ -71,6 +83,15 @@ class ReleaseWorkflowTests(unittest.TestCase):
                 self.assertIn("--source-ref", guide)
                 self.assertIn("--source-digest", guide)
                 self.assertIn("SHA256SUMS", guide)
+
+    def test_all_release_actions_use_full_commit_pins(self) -> None:
+        references = re.findall(
+            r"^\s*uses:\s*([^@\s]+)@([^\s#]+)", self.workflow, re.MULTILINE
+        )
+        self.assertTrue(references)
+        for action, revision in references:
+            with self.subTest(action=action):
+                self.assertRegex(revision, r"\A[0-9a-f]{40}\Z")
 
 
 if __name__ == "__main__":

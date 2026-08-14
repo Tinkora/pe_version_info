@@ -49,4 +49,4 @@ target_sizes = [16, 24, 32, 48, 64, 128, 256]
 
 `apply` 的 `version` 和 `icon` 在未请求对应资源时为 `null`；存在时记录已经在输出中验证通过的请求值。图标对象包含 `source_format`、`renderer`、`target_sizes` 和 `cropped`，不会包含图像源字节。
 
-PE 解析只报告 certificate table 是否存在，不验证 Authenticode 信任。签名有效性必须使用 Windows 独立验证流程确认。
+PE 解析只报告 certificate table 是否存在，不验证 Authenticode 信任或摘要。Windows 独立流程会验证修改前摘要和测试链，并在不修改系统信任存储的前提下证明重建输出不再含签名。

@@ -42,13 +42,26 @@ def main() -> None:
     )
     assert "CertificateRequest" in windows_evidence
     assert "New-SelfSignedCertificate" not in windows_evidence
-    assert "StoreName]::TrustedPublisher" in windows_evidence
+    assert "certutil.exe" not in windows_evidence
+    assert "Registry::HKEY_CURRENT_USER" not in windows_evidence
+    assert "StoreName]::TrustedPublisher" not in windows_evidence
+    assert "StoreName]::Root" not in windows_evidence
     assert "StoreName]::My" in windows_evidence
     assert "Assert-CodeSigningCertificateChain" in windows_evidence
     assert "X509ChainTrustMode]::CustomRootTrust" in windows_evidence
+    assert '$beforeEditSignature.Status -eq "UnknownError"' in windows_evidence
+    assert '$afterEditSignature.Status -eq "NotSigned"' in windows_evidence
+    assert "VerifyAuthenticode" in windows_evidence
+    assert "CERT_E_UNTRUSTEDROOT" in windows_evidence
+    assert "CERT_E_CHAINING" in windows_evidence
+    assert "$beforeEditTrustFailures -contains $beforeEditWinTrust" in windows_evidence
+    assert "TRUST_E_NOSIGNATURE" in windows_evidence
+    assert "after_edit_signature_absent = $true" in windows_evidence
+    assert "TRUST_E_BAD_DIGEST" not in windows_evidence
+    assert "after_edit_digest_mismatch" not in windows_evidence
     assert "X509KeyStorageFlags]::PersistKeySet" in windows_evidence
     assert "X509KeyStorageFlags]::UserKeySet" in windows_evidence
-    assert "Windows evidence phase: trust signing certificate" in windows_evidence
+    assert "Windows evidence phase: sign without mutating trust stores" in windows_evidence
     release_workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="UTF-8")
     for marker in (
         "scripts/generate_release_evidence.py",
