@@ -76,6 +76,14 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertRegex(build, r'test -x "\$\{[^}]+\}[^"\n]*/pevi"')
         self.assertIn('(cd dist && shasum -a 256', build)
 
+    def test_windows_checksum_uses_a_portable_line_ending(self) -> None:
+        build = job_block(self.workflow, "build")
+
+        self.assertIn("[System.IO.File]::WriteAllText", build)
+        self.assertIn('"$checksum`n",', build)
+        self.assertIn("[System.Text.Encoding]::ASCII", build)
+        self.assertNotIn("Out-File -Encoding ascii", build)
+
     def test_attestation_guides_bind_source_ref_and_commit_digest(self) -> None:
         for relative_path in ("docs/RELEASING.md", "docs/RELEASING.zh-CN.md"):
             with self.subTest(document=relative_path):

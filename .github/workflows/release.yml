@@ -101,7 +101,12 @@ jobs:
           New-Item -ItemType Directory -Force dist | Out-Null
           $artifact = "dist/pevi-$env:RELEASE_TAG-${{ matrix.target }}.exe"
           Copy-Item "target/${{ matrix.target }}/release/pevi.exe" $artifact
-          (Get-FileHash $artifact -Algorithm SHA256).Hash.ToLower() + "  $(Split-Path $artifact -Leaf)" | Out-File -Encoding ascii "$artifact.sha256"
+          $checksum = (Get-FileHash $artifact -Algorithm SHA256).Hash.ToLower() + "  $(Split-Path $artifact -Leaf)"
+          [System.IO.File]::WriteAllText(
+            "$artifact.sha256",
+            "$checksum`n",
+            [System.Text.Encoding]::ASCII
+          )
       - name: Upload candidate artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
