@@ -102,4 +102,10 @@ Stop expanding the format matrix if a format cannot be supported without a large
 
 The first stable schema version is `1`. Breaking changes to configuration keys, CLI JSON, MCP tool names, or error codes require schema version `2` or a major release.
 
+While the repository is Draft/Alpha, schema version `1` remains a candidate
+contract and may receive breaking corrections before the first stable release.
+Such changes must be called out in the changelog and mirrored in the generated
+schemas and bilingual documentation. The stable-version rule applies once the
+project leaves pre-1.0 maturity.
+
 The tool must preserve all unrelated resources unless the config explicitly requests removal. It must preserve the original file when output is a separate path and must use an atomic temporary-write/rename sequence for replacement.

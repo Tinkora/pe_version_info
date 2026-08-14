@@ -240,6 +240,10 @@ fn render_success_with_warnings<T: Serialize>(
     format: Format,
     warnings: Vec<String>,
 ) -> Result<String, CoreError> {
+    let data = serde_json::to_value(data).map_err(|_| CoreError::WriteFailed)?;
+    if format != Format::Json {
+        return Ok(format_human(command, &data, &warnings));
+    }
     let envelope = json!({
         "schema_version": 1,
         "ok": true,
@@ -248,11 +252,22 @@ fn render_success_with_warnings<T: Serialize>(
         "warnings": warnings,
         "errors": [],
     });
-    if format == Format::Json {
-        serde_json::to_string(&envelope).map_err(|_| CoreError::WriteFailed)
+    serde_json::to_string(&envelope).map_err(|_| CoreError::WriteFailed)
+}
+
+fn format_human(command: &str, data: &Value, warnings: &[String]) -> String {
+    let mut lines = vec![format!("{command}: ok")];
+    if let Some(object) = data.as_object() {
+        for (key, value) in object {
+            lines.push(format!("{key}: {value}"));
+        }
     } else {
-        Ok(serde_json::to_string_pretty(&envelope).map_err(|_| CoreError::WriteFailed)?)
+        lines.push(format!("data: {data}"));
     }
+    for warning in warnings {
+        lines.push(format!("warning: {warning}"));
+    }
+    lines.join("\n")
 }
 
 #[allow(dead_code)]
@@ -269,7 +284,7 @@ pub fn render_error(command: &str, error: &CoreError, format: Format) -> String 
     if format == Format::Json {
         serde_json::to_string(&envelope).unwrap_or_else(|_| "{\"ok\":false}".to_owned())
     } else {
-        serde_json::to_string_pretty(&envelope).unwrap_or_else(|_| "operation failed".to_owned())
+        format!("{command}: error {} ({})", report.code, report.message)
     }
 }
 

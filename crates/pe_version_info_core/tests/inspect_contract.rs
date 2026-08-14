@@ -1,6 +1,7 @@
 use editpe::{Image, VersionStringTable};
 use pe_version_info_core::error::CoreError;
 use pe_version_info_core::inspect::{PeArchitecture, PeKind, inspect};
+use pe_version_info_core::signature::SignatureValidationStatus;
 use std::fs;
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
@@ -25,7 +26,10 @@ fn inspects_pe32_version_information() {
     assert_eq!(inspection.architecture, PeArchitecture::X86);
     assert_eq!(inspection.sha256.len(), 64);
     assert!(!inspection.certificate_table_present);
-    assert!(!inspection.signature_validated);
+    assert_eq!(
+        inspection.signature_validation,
+        SignatureValidationStatus::NotChecked
+    );
     assert!(inspection.resources.version_info_present);
     assert!(!inspection.resources.main_icon_present);
     let version = inspection
@@ -136,7 +140,10 @@ fn reports_certificate_table_presence_without_claiming_validation() {
     let inspection = inspect(&path).expect("derived PE should inspect");
 
     assert!(inspection.certificate_table_present);
-    assert!(!inspection.signature_validated);
+    assert_eq!(
+        inspection.signature_validation,
+        SignatureValidationStatus::NotChecked
+    );
 }
 
 fn add_certificate_table_marker(bytes: &mut Vec<u8>) {

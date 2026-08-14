@@ -147,6 +147,24 @@ fn rejects_version_strings_that_exceed_the_binary_format_limit() {
 }
 
 #[test]
+fn rejects_reserved_version_strings_at_the_merge_boundary() {
+    for key in [
+        "FileVersion",
+        "fileversion",
+        "ProductVersion",
+        "productversion",
+    ] {
+        let result = merge_version_info(None, &requested(&[(key, "spoofed")]), true);
+        assert_eq!(
+            result
+                .expect_err("reserved version string should fail")
+                .code(),
+            "config_invalid"
+        );
+    }
+}
+
+#[test]
 fn prepares_resources_without_mutating_the_input_image_and_round_trips() {
     let bytes = fs::read(fixture("pe32_unsigned.exe")).expect("fixture should be readable");
     let image = Image::parse(bytes.clone()).expect("fixture should parse");

@@ -8,6 +8,7 @@ use std::path::{Component, Path, PathBuf};
 
 const MAX_CONFIG_BYTES: u64 = 1024 * 1024;
 const DEFAULT_ICON_SIZES: &[u16] = &[16, 24, 32, 48, 64, 128, 256];
+const MAX_ICON_TARGET_SIZES: usize = 16;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ExecutionAuthorization {
@@ -64,8 +65,10 @@ pub struct VersionConfig {
     pub file_version: VersionNumber,
     pub product_version: VersionNumber,
     #[serde(default = "default_language")]
+    #[schemars(extend("const" = "en-US"))]
     pub language: String,
     #[serde(default = "default_code_page")]
+    #[schemars(extend("const" = 1200))]
     pub code_page: u16,
     #[serde(default)]
     pub strings: BTreeMap<String, String>,
@@ -87,8 +90,14 @@ pub struct IconConfig {
     #[serde(default)]
     pub allow_crop: bool,
     #[serde(default = "default_background")]
+    #[schemars(extend("pattern" = r"^(transparent|#[0-9A-Fa-f]{8})$"))]
     pub background: String,
     #[serde(default = "default_target_sizes")]
+    #[schemars(
+        length(min = 1, max = 16),
+        inner(range(min = 16, max = 256)),
+        extend("uniqueItems" = true)
+    )]
     pub target_sizes: Vec<u16>,
 }
 
@@ -232,11 +241,14 @@ fn validate_version(version: &VersionConfig) -> Result<(), CoreError> {
     if version.language != "en-US" || version.code_page != 1200 {
         return Err(CoreError::ConfigInvalid);
     }
-    if version
-        .strings
-        .iter()
-        .any(|(key, value)| key.is_empty() || value.encode_utf16().count() >= u16::MAX as usize)
-    {
+    if version.strings.iter().any(|(key, value)| {
+        key.is_empty()
+            || matches!(
+                key.to_ascii_lowercase().as_str(),
+                "fileversion" | "productversion"
+            )
+            || value.encode_utf16().count() >= u16::MAX as usize
+    }) {
         return Err(CoreError::ConfigInvalid);
     }
     Ok(())
@@ -256,6 +268,7 @@ fn validate_icon(icon: &IconConfig) -> Result<(), CoreError> {
         return Err(CoreError::IconCropNotAllowed);
     }
     if icon.target_sizes.is_empty()
+        || icon.target_sizes.len() > MAX_ICON_TARGET_SIZES
         || icon.target_sizes.windows(2).any(|pair| pair[0] >= pair[1])
         || icon
             .target_sizes

@@ -25,4 +25,5 @@ jobs:
       - name: Test release evidence generation
         run: |
           python scripts/test_release_evidence.py
+          python scripts/test_release_workflow.py
           python scripts/test_validate_release_version.py

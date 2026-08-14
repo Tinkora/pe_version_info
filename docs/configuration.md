@@ -46,6 +46,7 @@ creating a template cannot change VERSIONINFO or icons.
 - `input` must identify a regular file with an `.exe` or `.dll` extension, while the PE signature remains authoritative.
 - `output` must not equal `input` unless the CLI was invoked with `--in-place` and the confirmation flag.
 - `file_version` and `product_version` accept `major.minor.patch[.build]`, with each component in `0..=65535`.
+- `[version.strings]` must not define `FileVersion` or `ProductVersion` in any casing; the canonical values come from the typed version fields.
 - `language` must be a supported BCP-47/Windows locale mapping. Alpha supports `en-US`; unsupported locales fail instead of silently falling back.
 - `code_page` must be a supported VERSIONINFO code page. Alpha supports `1200` (UTF-16LE).
 - `target_sizes` must be unique, sorted, and in `16..=256`.
@@ -88,7 +89,7 @@ pevi apply --config <path> [--output <path>] [--in-place --confirm-in-place]
            [--format human|json]
 ```
 
-The config remains authoritative; command-line output/policy flags are explicit overrides recorded in the report. A signed input requires both override flags and produces an unsigned/invalidly signed result warning.
+The config remains authoritative; command-line output/policy flags are explicit overrides recorded in the report. A signed input requires both override flags and produces an unsigned/invalidly signed result warning. `apply` rejects a config that requests neither VERSIONINFO nor icon changes.
 
 ### `verify`
 
@@ -96,7 +97,7 @@ The config remains authoritative; command-line output/policy flags are explicit 
 pevi verify --input <path> [--config <path>] [--format human|json]
 ```
 
-Checks that the file is parseable, requested values match, the icon is valid, and signature state is reported accurately.
+Checks that the file is parseable, requested values match, and the icon is valid. PE parsing only reports whether a certificate table is present; it does not validate Authenticode trust. Use the independent Windows verification workflow for signature validity.
 
 ### `convert-icon`
 
@@ -123,7 +124,7 @@ Every command using `--format json` emits one JSON object with:
     "output_sha256": "...",
     "signature": {
       "input_certificate_table_present": false,
-      "output_signature_validated": false,
+      "output_signature_validation": "not_checked",
       "signature_invalidated_by_edit": false
     },
     "version_changed": true,

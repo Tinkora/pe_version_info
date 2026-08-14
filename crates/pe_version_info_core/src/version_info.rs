@@ -82,6 +82,10 @@ fn validate_requested_version(requested: &VersionConfig) -> Result<(), CoreError
     }
     if requested.strings.iter().any(|(key, value)| {
         key.is_empty()
+            || matches!(
+                key.to_ascii_lowercase().as_str(),
+                "fileversion" | "productversion"
+            )
             || key.encode_utf16().count() >= u16::MAX as usize
             || value.encode_utf16().count() >= u16::MAX as usize
     }) {

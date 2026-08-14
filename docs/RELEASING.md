@@ -18,7 +18,12 @@ release evidence. It does not create tags or GitHub Releases automatically.
    example `v0.1.0-alpha.1`.
 8. Download the three target binaries and aggregate evidence artifact. Verify
    `SHA256SUMS`, `sbom.spdx.json`, `license_inventory.json`, and
-   `THIRD_PARTY_NOTICES.md`.
+   `THIRD_PARTY_NOTICES.md`. The SBOM and license inventory contain the union
+   of normal and build dependencies reachable from `pevi_cli` for the three
+   released targets; development-only dependencies are excluded. The notice
+   file embeds the license and notice files from each selected third-party
+   Cargo package, and evidence generation fails when a declared license cannot
+   be mapped unambiguously to the package's files.
 9. Verify both the build-provenance and SBOM attestations with GitHub CLI for
    each candidate binary.
 10. Publish a prerelease only after repository rules, protected environments, and
@@ -30,12 +35,19 @@ repository's release workflow:
 ```bash
 gh attestation verify PATH_TO_BINARY \
   --repo Tinkora/pe_version_info \
-  --signer-workflow Tinkora/pe_version_info/.github/workflows/release.yml
+  --signer-workflow Tinkora/pe_version_info/.github/workflows/release.yml \
+  --source-ref refs/tags/v0.1.0-alpha.1 \
+  --source-digest COMMIT_SHA
 gh attestation verify PATH_TO_BINARY \
   --repo Tinkora/pe_version_info \
   --signer-workflow Tinkora/pe_version_info/.github/workflows/release.yml \
-  --predicate-type https://spdx.dev/Document/v2.3
+  --predicate-type https://spdx.dev/Document/v2.3 \
+  --source-ref refs/tags/v0.1.0-alpha.1 \
+  --source-digest COMMIT_SHA
 ```
+
+Replace `COMMIT_SHA` with the exact reviewed commit used by the candidate and
+keep the source ref and digest identical for both checks.
 
 Never edit signed release binaries in place. Keep the prior artifact and its
 checksum for rollback, and never move an immutable tag to hide a bad artifact.

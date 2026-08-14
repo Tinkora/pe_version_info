@@ -88,6 +88,14 @@ impl JsonSchema for VersionNumber {
     }
 
     fn json_schema(generator: &mut SchemaGenerator) -> Schema {
-        <String>::json_schema(generator)
+        let mut schema = <String>::json_schema(generator);
+        schema
+            .as_object_mut()
+            .expect("string schema should be an object")
+            .insert(
+                "pattern".to_owned(),
+                serde_json::json!(r"^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$"),
+            );
+        schema
     }
 }

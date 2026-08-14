@@ -279,3 +279,57 @@ output = "output.exe"
         "config_version_unsupported"
     );
 }
+
+#[test]
+fn rejects_reserved_version_string_keys_case_insensitively() {
+    let directory = tempdir().expect("temporary directory should be created");
+    fs::write(directory.path().join("app.exe"), b"fixture").expect("test input should be written");
+    for key in [
+        "FileVersion",
+        "fileversion",
+        "ProductVersion",
+        "productversion",
+    ] {
+        let config_path = write_config(
+            directory.path(),
+            &format!(
+                "schema_version = 1\ninput = \"app.exe\"\noutput = \"output.exe\"\n\n[version]\nfile_version = \"1.2.3.4\"\nproduct_version = \"1.2.3.4\"\n[version.strings]\n{key} = \"spoofed\"\n"
+            ),
+        );
+        assert_eq!(
+            error_code(load_config(
+                &config_path,
+                &ExecutionAuthorization::default()
+            )),
+            "config_invalid",
+            "reserved key {key} must be rejected"
+        );
+    }
+}
+
+#[test]
+fn rejects_more_than_sixteen_icon_target_sizes() {
+    let directory = tempdir().expect("temporary directory should be created");
+    fs::write(directory.path().join("app.exe"), b"fixture").expect("test input should be written");
+    fs::write(directory.path().join("icon.png"), b"fixture").expect("test icon should be written");
+    let config_path = write_config(
+        directory.path(),
+        r#"
+schema_version = 1
+input = "app.exe"
+output = "output.exe"
+
+[icon]
+source = "icon.png"
+target_sizes = [16, 24, 32, 40, 48, 56, 64, 72, 80, 96, 112, 128, 144, 160, 192, 224, 256]
+"#,
+    );
+
+    assert_eq!(
+        error_code(load_config(
+            &config_path,
+            &ExecutionAuthorization::default()
+        )),
+        "config_invalid"
+    );
+}

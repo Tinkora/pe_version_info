@@ -39,6 +39,8 @@ pub enum CoreError {
     SignedInputRejected,
     #[error("signature invalidation was not acknowledged")]
     SignatureInvalidationNotAcknowledged,
+    #[error("no resource mutation was requested")]
+    NoMutationRequested,
     #[error("PE resource data is malformed")]
     ResourceMalformed,
     #[error("VERSIONINFO data is malformed")]
@@ -72,6 +74,7 @@ impl CoreError {
             Self::UnsupportedPeArchitecture => "unsupported_pe_architecture",
             Self::SignedInputRejected => "signed_input_rejected",
             Self::SignatureInvalidationNotAcknowledged => "signature_invalidation_not_acknowledged",
+            Self::NoMutationRequested => "no_mutation_requested",
             Self::ResourceMalformed => "resource_malformed",
             Self::VersionInfoMalformed => "version_info_malformed",
             Self::IconInvalid => "icon_invalid",
@@ -99,6 +102,7 @@ impl CoreError {
             Self::SignatureInvalidationNotAcknowledged => {
                 "signature invalidation was not acknowledged"
             }
+            Self::NoMutationRequested => "no resource mutation was requested",
             Self::ResourceMalformed => "PE resource data is malformed",
             Self::VersionInfoMalformed => "VERSIONINFO data is malformed",
             Self::IconInvalid => "icon data is invalid",

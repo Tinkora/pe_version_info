@@ -66,3 +66,11 @@ ChatGPT/Codex 自定义 UI 运行在 MCP Apps iframe 中。文件选择/上传�
 Alpha 阶段至少完成：三平台构建；三平台读写 fixture EXE；PNG/JPEG/ICO 图标转换且不隐式裁切；使用独立于 `editpe` 的 Windows API 或检查器验证 VERSIONINFO 和主图标；真实 Authenticode fixture 在修改前有效，并在显式授权修改后由独立工具报告为失效或无签名；默认拒绝已签名输入；机器可读的 `plan` 摘要；干净消费环境完成 CLI 流程，fresh agent 无需阅读项目源码即可完成 Skill 流程；准确候选 commit 的托管 native、文档和供应链检查全部通过；候选产物包含 checksum、SBOM、许可证证据、可用的 provenance/attestation 和受保护的 `v*` tag 治理。
 
 如果某种格式需要大型原生运行时、存在不清晰的再分发权利或渲染不确定，应停止扩展格式矩阵，保留明确支持列表并给出转换建议。
+
+## 6. 用户可见的兼容性契约
+
+首个稳定 schema 版本为 `1`。配置键、CLI JSON、MCP 工具名称或错误码的破坏性变更必须升级到 schema `2` 或主版本。
+
+仓库处于 Draft/Alpha 期间，schema `1` 仍是候选契约，首个稳定版本前可以修正破坏性错误；此类变更必须写入 changelog，并同步更新生成的 schema 和双语文档。项目离开 1.0 之前成熟度后，执行稳定版本规则。
+
+工具必须保留所有未被配置明确要求移除的资源；当输出到独立路径时必须保留原文件，并使用临时文件与原子 rename 流程完成替换。

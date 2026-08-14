@@ -10,12 +10,10 @@ import tempfile
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--pevi", type=Path, required=True)
+    parser.add_argument("--fixture", type=Path, required=True)
     parser.add_argument("--evidence", type=Path, required=True)
     return parser.parse_args()
 
@@ -30,13 +28,19 @@ def executable_path(path: Path) -> Path:
     raise FileNotFoundError(f"pevi executable not found: {candidate}")
 
 
-def invoke(pevi: Path, *arguments: str, expected_code: int = 0) -> dict[str, object]:
+def invoke(
+    pevi: Path,
+    consumer: Path,
+    *arguments: str,
+    expected_code: int = 0,
+) -> dict[str, object]:
     result = subprocess.run(
         [str(pevi), *arguments],
         check=False,
         capture_output=True,
         text=True,
         encoding="utf-8",
+        cwd=consumer,
     )
     if result.returncode != expected_code:
         raise AssertionError(
@@ -46,8 +50,21 @@ def invoke(pevi: Path, *arguments: str, expected_code: int = 0) -> dict[str, obj
     return json.loads(result.stdout)
 
 
-def toml_path(path: Path) -> str:
-    return path.resolve().as_posix().replace('"', '\\"')
+def invoke_human(pevi: Path, consumer: Path, *arguments: str) -> str:
+    result = subprocess.run(
+        [str(pevi), *arguments],
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=consumer,
+    )
+    if result.returncode != 0:
+        raise AssertionError(
+            f"pevi {' '.join(arguments)} returned {result.returncode}: "
+            f"{result.stderr.strip()} {result.stdout.strip()}"
+        )
+    return result.stdout
 
 
 def digest(path: Path) -> str:
@@ -57,25 +74,31 @@ def digest(path: Path) -> str:
 def main() -> None:
     args = parse_args()
     pevi = executable_path(args.pevi)
-    fixture = ROOT / "fixtures/pe64_unsigned.exe"
+    fixture = args.fixture.resolve()
+    if not fixture.is_file():
+        raise FileNotFoundError(f"clean-consumer fixture not found: {fixture}")
 
     with tempfile.TemporaryDirectory(prefix="pevi-clean-consumer-") as temporary:
         consumer = Path(temporary)
+        consumer_pevi = consumer / pevi.name
         consumer_input = consumer / "consumer.exe"
         output = consumer / "consumer-versioned.exe"
         config = consumer / "pevi.toml"
         unsafe_config = consumer / "unsafe.toml"
+        shutil.copyfile(pevi, consumer_pevi)
+        if not consumer_pevi.name.lower().endswith(".exe"):
+            consumer_pevi.chmod(consumer_pevi.stat().st_mode | 0o111)
         shutil.copyfile(fixture, consumer_input)
         original_hash = digest(consumer_input)
 
-        initialized = invoke(pevi, "init", "--output", str(config))
-        if not initialized["ok"] or not config.is_file():
+        initialized = invoke_human(consumer_pevi, consumer, "init", "--output", "pevi.toml")
+        if not initialized.startswith("init: ok") or not config.is_file():
             raise AssertionError("pevi init did not create the consumer configuration")
 
         config.write_text(
             f'''schema_version = 1
-input = "{toml_path(consumer_input)}"
-output = "{toml_path(output)}"
+input = "consumer.exe"
+output = "consumer-versioned.exe"
 
 [policy]
 overwrite_output = false
@@ -93,16 +116,17 @@ ProductName = "Clean Consumer Acceptance"
             encoding="utf-8",
         )
 
-        inspection = invoke(pevi, "inspect", "--input", str(consumer_input), "--format", "json")
-        plan = invoke(pevi, "plan", "--config", str(config), "--format", "json")
-        applied = invoke(pevi, "apply", "--config", str(config), "--format", "json")
+        inspection = invoke(consumer_pevi, consumer, "inspect", "--input", "consumer.exe", "--format", "json")
+        plan = invoke(consumer_pevi, consumer, "plan", "--config", "pevi.toml", "--format", "json")
+        applied = invoke(consumer_pevi, consumer, "apply", "--config", "pevi.toml", "--format", "json")
         verified = invoke(
-            pevi,
+            consumer_pevi,
+            consumer,
             "verify",
             "--input",
-            str(output),
+            "consumer-versioned.exe",
             "--config",
-            str(config),
+            "pevi.toml",
             "--format",
             "json",
         )
@@ -126,18 +150,19 @@ ProductName = "Clean Consumer Acceptance"
 
         unsafe_config.write_text(
             config.read_text(encoding="utf-8").replace(
-                f'output = "{toml_path(output)}"',
-                f'output = "{toml_path(consumer_input)}"',
+                'output = "consumer-versioned.exe"',
+                'output = "consumer.exe"',
             ),
             encoding="utf-8",
         )
         rejection_codes = []
         for flags in ((), ("--in-place",), ("--confirm-in-place",)):
             rejected = invoke(
-                pevi,
+                consumer_pevi,
+                consumer,
                 "apply",
                 "--config",
-                str(unsafe_config),
+                "unsafe.toml",
                 "--format",
                 "json",
                 *flags,

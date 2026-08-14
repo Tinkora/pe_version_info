@@ -8,6 +8,7 @@ use std::io::{BufReader, Cursor};
 pub const MAX_ICON_SOURCE_BYTES: u64 = 32 * 1024 * 1024;
 const MAX_ICON_DIMENSION: u32 = 8192;
 const MAX_ICON_PIXELS: u64 = 64 * 1024 * 1024;
+const MAX_ICON_TARGET_SIZES: usize = 16;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IconArtifact {
@@ -77,6 +78,7 @@ pub fn convert_icon(config: &IconConfig) -> Result<IconArtifact, CoreError> {
 
 fn validate_target_sizes(sizes: &[u16]) -> Result<(), CoreError> {
     if sizes.is_empty()
+        || sizes.len() > MAX_ICON_TARGET_SIZES
         || sizes.windows(2).any(|pair| pair[0] >= pair[1])
         || sizes.iter().any(|size| !(16..=256).contains(size))
     {

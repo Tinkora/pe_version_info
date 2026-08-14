@@ -46,6 +46,7 @@ jobs:
         run: >-
           python scripts/test_clean_consumer.py
           --pevi target/debug/pevi
+          --fixture fixtures/pe64_unsigned.exe
           --evidence artifacts/clean-consumer-${{ runner.os }}.json
 
       - name: Upload clean-consumer evidence

@@ -290,7 +290,7 @@ Use `ResourceDirectory::get_version_info()`, `VersionInfo`, `VersionStringTable`
 
 - [ ] **Step 5: Implement signature detection policy input**
 
-Detect the PE certificate-table directory without claiming cryptographic trust. The result fields must distinguish `certificate_table_present`, `signature_validated`, and `signature_invalidated_by_edit`. A certificate blob alone is never “verified”.
+Detect the PE certificate-table directory without claiming cryptographic trust. The result fields must distinguish `certificate_table_present`, `signature_validation`, and `signature_invalidated_by_edit`. A certificate blob alone is never “verified”; the current cross-platform parser reports `not_checked` until an independent verifier runs.
 
 - [ ] **Step 6: Verify**
 

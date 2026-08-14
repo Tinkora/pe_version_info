@@ -16,7 +16,10 @@
    `v0.1.0-alpha.1`。
 8. 下载三个目标二进制和聚合证据 artifact，核验 `SHA256SUMS`、
    `sbom.spdx.json`、`license_inventory.json` 和
-   `THIRD_PARTY_NOTICES.md`。
+   `THIRD_PARTY_NOTICES.md`。SBOM 和许可证清单包含三个发布 target 上从
+   `pevi_cli` 可达的 normal/build 依赖并集，不包含仅用于开发的依赖。
+   notice 文件会嵌入每个入选第三方 Cargo package 随包发布的许可证与通知
+   文件；如果许可证声明无法与包内文件明确对应，证据生成会直接失败。
 9. 使用 GitHub CLI 对每个候选二进制分别验证 build provenance 和 SBOM
    attestation。
 10. 只有在核验仓库规则、受保护环境和托管检查后，授权维护者才能发布预发布版本。
@@ -27,11 +30,18 @@ workflow：
 ```bash
 gh attestation verify PATH_TO_BINARY \
   --repo Tinkora/pe_version_info \
-  --signer-workflow Tinkora/pe_version_info/.github/workflows/release.yml
+  --signer-workflow Tinkora/pe_version_info/.github/workflows/release.yml \
+  --source-ref refs/tags/v0.1.0-alpha.1 \
+  --source-digest COMMIT_SHA
 gh attestation verify PATH_TO_BINARY \
   --repo Tinkora/pe_version_info \
   --signer-workflow Tinkora/pe_version_info/.github/workflows/release.yml \
-  --predicate-type https://spdx.dev/Document/v2.3
+  --predicate-type https://spdx.dev/Document/v2.3 \
+  --source-ref refs/tags/v0.1.0-alpha.1 \
+  --source-digest COMMIT_SHA
 ```
+
+将 `COMMIT_SHA` 替换为候选版本使用的准确审核 commit；两次校验必须使用
+相同的 source ref 和 digest。
 
 不要原地修改已签名的正式文件。保留旧产物及校验和用于回滚，也不要移动不可变 tag。

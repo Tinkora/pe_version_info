@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Reject no-op apply requests and reserved version-string overrides before writing.
+- Render terminal output as human-readable text while preserving the versioned JSON automation envelope.
+- Replace ambiguous signature booleans with an explicit `not_checked` validation status.
+- Align JSON Schema constraints with runtime language, code-page, version, icon, and crop rules.
+- Run clean-consumer acceptance from a copied binary and fixture in an isolated working directory.
+- Bind release attestation verification to the reviewed source ref and commit digest.
+
 ### Added
 
 - Draft native Rust core and `pevi` CLI for PE inspection, VERSIONINFO merging, bounded PNG/JPEG/ICO conversion, transactional output, and stable JSON errors.
@@ -13,3 +22,5 @@ All notable changes to this project will be documented in this file.
 - Main-icon verification checks every embedded frame and rejects missing or corrupted non-primary frames.
 - `pevi init` now comments optional mutation sections to prevent accidental VERSIONINFO or icon changes.
 - Plans expose icon policy and signature consequences; authorized signed edits emit an explicit Authenticode warning.
+
+- Release SBOM and license evidence now cover only the `pevi_cli` normal/build dependency closure for released targets, exclude development-only crates, and embed the selected packages' actual license and notice texts.

@@ -9,6 +9,7 @@
 | invalid_pe | The file is not a supported PE image |
 | signed_input_rejected | A certificate table is present |
 | signature_invalidation_not_acknowledged | Signature invalidation lacks explicit acknowledgement |
+| no_mutation_requested | Neither VERSIONINFO nor icon changes were requested |
 | unsupported_input_extension | The extension is outside the candidate |
 | icon_invalid | Image or ICO bytes are malformed |
 | icon_crop_not_allowed | Cover mode lacks explicit crop permission |

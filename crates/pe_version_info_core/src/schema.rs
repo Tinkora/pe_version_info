@@ -18,7 +18,31 @@ pub struct ReportEnvelope {
 }
 
 pub fn config_schema() -> Schema {
-    schema_for!(ConfigFile)
+    let mut schema = schema_for!(ConfigFile);
+    let root = schema
+        .as_object_mut()
+        .expect("config schema should be an object");
+    let defs = root
+        .get_mut("$defs")
+        .and_then(Value::as_object_mut)
+        .expect("config schema should contain definitions");
+    let icon = defs
+        .get_mut("IconConfig")
+        .and_then(Value::as_object_mut)
+        .expect("config schema should define IconConfig");
+    icon.insert(
+        "allOf".to_owned(),
+        serde_json::json!([
+            {
+                "if": {
+                    "required": ["fit"],
+                    "properties": {"fit": {"const": "cover"}}
+                },
+                "then": {"properties": {"allow_crop": {"const": true}}}
+            }
+        ]),
+    );
+    schema
 }
 
 pub fn report_schema() -> Schema {

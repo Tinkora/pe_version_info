@@ -68,6 +68,25 @@ fn init_writes_a_template_and_refuses_overwrite_without_force() {
 }
 
 #[test]
+fn human_output_is_not_json() {
+    let directory = tempdir().unwrap();
+    let input = directory.path().join("fixture.exe");
+    fs::copy(fixture("pe32_unsigned.exe"), &input).unwrap();
+
+    let output = Command::cargo_bin("pevi")
+        .unwrap()
+        .args(["inspect", "--input", input.to_str().unwrap()])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let text = String::from_utf8(output).unwrap();
+    assert!(!text.trim_start().starts_with('{'));
+    assert!(text.contains("inspect"));
+}
+
+#[test]
 fn inspect_json_is_read_only_and_contains_stable_data() {
     let directory = tempdir().unwrap();
     let input = directory.path().join("fixture.exe");
@@ -432,7 +451,7 @@ fn apply_output_override_allows_a_config_that_names_the_input() {
     fs::copy(fixture("pe32_unsigned.exe"), &input).unwrap();
     fs::write(
         &config,
-        "schema_version = 1\ninput = \"input.exe\"\noutput = \"input.exe\"\n",
+        "schema_version = 1\ninput = \"input.exe\"\noutput = \"input.exe\"\n\n[version]\nfile_version = \"1.2.3.4\"\nproduct_version = \"1.2.3.4\"\n",
     )
     .unwrap();
 
@@ -464,7 +483,7 @@ fn apply_relative_output_override_is_resolved_from_config_directory() {
     fs::create_dir(directory.path().join("nested")).unwrap();
     fs::write(
         &config,
-        "schema_version = 1\ninput = \"input.exe\"\noutput = \"input.exe\"\n",
+        "schema_version = 1\ninput = \"input.exe\"\noutput = \"input.exe\"\n\n[version]\nfile_version = \"1.2.3.4\"\nproduct_version = \"1.2.3.4\"\n",
     )
     .unwrap();
 

@@ -1,6 +1,7 @@
 use crate::config::{ExecutionAuthorization, IconConfig, Policy, VersionConfig};
 use crate::error::CoreError;
 use crate::icon::convert_icon;
+use crate::signature::SignatureValidationStatus;
 use crate::verify::verify_requested_resources;
 use crate::version_info::prepare_version_resources;
 use editpe::{DataDirectoryType, Image};
@@ -25,7 +26,7 @@ pub struct ApplyRequest {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SignatureReport {
     pub input_certificate_table_present: bool,
-    pub output_signature_validated: bool,
+    pub output_signature_validation: SignatureValidationStatus,
     pub signature_invalidated_by_edit: bool,
 }
 
@@ -63,6 +64,9 @@ pub struct IconApplyReport {
 }
 
 pub fn apply(request: &ApplyRequest) -> Result<ApplyReport, CoreError> {
+    if request.version.is_none() && request.icon.is_none() {
+        return Err(CoreError::NoMutationRequested);
+    }
     let input_metadata = fs::metadata(&request.input).map_err(|error| match error.kind() {
         std::io::ErrorKind::NotFound => CoreError::PathNotFound(request.input.clone()),
         _ => CoreError::PathNotRegularFile(request.input.clone()),
@@ -194,7 +198,7 @@ pub fn apply(request: &ApplyRequest) -> Result<ApplyReport, CoreError> {
         output_sha256: sha256(&output_bytes),
         signature: SignatureReport {
             input_certificate_table_present,
-            output_signature_validated: false,
+            output_signature_validation: SignatureValidationStatus::NotChecked,
             signature_invalidated_by_edit: input_certificate_table_present,
         },
         version_changed: request.version.is_some(),

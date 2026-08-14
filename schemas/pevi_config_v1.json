@@ -61,7 +61,8 @@
         },
         "background": {
           "type": "string",
-          "default": "transparent"
+          "default": "transparent",
+          "pattern": "^(transparent|#[0-9A-Fa-f]{8})$"
         },
         "fit": {
           "$ref": "#/$defs/IconFit",
@@ -84,12 +85,36 @@
           "items": {
             "type": "integer",
             "format": "uint16",
-            "maximum": 65535,
-            "minimum": 0
-          }
+            "maximum": 256,
+            "minimum": 16
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "uniqueItems": true
         }
       },
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "fit": {
+                "const": "cover"
+              }
+            },
+            "required": [
+              "fit"
+            ]
+          },
+          "then": {
+            "properties": {
+              "allow_crop": {
+                "const": true
+              }
+            }
+          }
+        }
+      ],
       "required": [
         "source"
       ]
@@ -121,6 +146,7 @@
         "code_page": {
           "type": "integer",
           "format": "uint16",
+          "const": 1200,
           "default": 1200,
           "maximum": 65535,
           "minimum": 0
@@ -130,6 +156,7 @@
         },
         "language": {
           "type": "string",
+          "const": "en-US",
           "default": "en-US"
         },
         "product_version": {
@@ -150,7 +177,8 @@
       ]
     },
     "VersionNumber": {
-      "type": "string"
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
     }
   }
 }

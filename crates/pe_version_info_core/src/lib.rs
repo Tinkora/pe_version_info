@@ -6,6 +6,7 @@ pub mod error;
 pub mod icon;
 pub mod inspect;
 pub mod schema;
+pub mod signature;
 pub mod verify;
 mod version;
 pub mod version_info;

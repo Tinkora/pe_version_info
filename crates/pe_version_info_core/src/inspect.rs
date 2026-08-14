@@ -1,4 +1,5 @@
 use crate::error::CoreError;
+use crate::signature::SignatureValidationStatus;
 use crate::{SCHEMA_VERSION, VersionNumber};
 use editpe::constants::{PE_32_MAGIC, PE_64_MAGIC};
 use editpe::{DataDirectoryType, Image};
@@ -65,7 +66,7 @@ pub struct PeInspection {
     pub sha256: String,
     pub resources: ResourceSummary,
     pub certificate_table_present: bool,
-    pub signature_validated: bool,
+    pub signature_validation: SignatureValidationStatus,
     pub signature_invalidated_by_edit: bool,
     pub version_info: Option<VersionInspection>,
 }
@@ -162,7 +163,7 @@ pub fn inspect(path: &Path) -> Result<PeInspection, CoreError> {
             main_icon_present,
         },
         certificate_table_present,
-        signature_validated: false,
+        signature_validation: SignatureValidationStatus::NotChecked,
         signature_invalidated_by_edit: false,
         version_info,
     })

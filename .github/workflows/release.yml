@@ -13,7 +13,27 @@ jobs:
   validate:
     name: Validate candidate version
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
+      - name: Reject untrusted source ref
+        shell: bash
+        env:
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_REF_PROTECTED: ${{ github.ref_protected }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ "${RELEASE_REF}" == "refs/heads/main" ]]; then
+            exit 0
+          fi
+          if [[ "${RELEASE_REF}" != "refs/tags/${RELEASE_VERSION}" ]]; then
+            echo "release candidates must run from main or the matching version tag" >&2
+            exit 1
+          fi
+          if [[ "${RELEASE_REF_PROTECTED}" != "true" ]]; then
+            echo "release candidate tags must be protected by repository rules" >&2
+            exit 1
+          fi
       - name: Check out repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -27,6 +47,7 @@ jobs:
     name: Build ${{ matrix.target }}
     needs: validate
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -52,9 +73,16 @@ jobs:
         env:
           RELEASE_VERSION: ${{ inputs.version }}
         run: |
+          set -euo pipefail
           mkdir -p dist
-          artifact="dist/pevi-${RELEASE_VERSION}-${{ matrix.target }}"
-          cp "target/${{ matrix.target }}/release/pevi" "$artifact"
+          package_root="$(mktemp -d)"
+          verification_root="$(mktemp -d)"
+          trap 'rm -rf -- "${package_root}" "${verification_root}"' EXIT
+          artifact="dist/pevi-${RELEASE_VERSION}-${{ matrix.target }}.tar.gz"
+          install -m 0755 "target/${{ matrix.target }}/release/pevi" "${package_root}/pevi"
+          tar -C "${package_root}" -czf "$artifact" pevi
+          tar -C "${verification_root}" -xzf "$artifact"
+          test -x "${verification_root}/pevi"
           shasum -a 256 "$artifact" > "${artifact}.sha256"
       - name: Package and checksum (Windows)
         if: runner.os == 'Windows'
@@ -76,6 +104,8 @@ jobs:
     name: Aggregate and attest release evidence
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: release
     permissions:
       artifact-metadata: write
       attestations: write
@@ -102,10 +132,23 @@ jobs:
         env:
           RELEASE_VERSION: ${{ inputs.version }}
         run: |
-          cargo +1.95.0 metadata --format-version 1 --locked > artifacts.cargo-metadata.json
+          for target in \
+            x86_64-unknown-linux-gnu \
+            aarch64-apple-darwin \
+            x86_64-pc-windows-msvc
+          do
+            cargo +1.95.0 metadata \
+              --format-version 1 \
+              --locked \
+              --filter-platform "$target" \
+              > "artifacts.cargo-metadata-${target}.json"
+          done
           python scripts/generate_release_evidence.py \
             --dist dist \
-            --metadata artifacts.cargo-metadata.json \
+            --root-package pevi_cli \
+            --metadata x86_64-unknown-linux-gnu=artifacts.cargo-metadata-x86_64-unknown-linux-gnu.json \
+            --metadata aarch64-apple-darwin=artifacts.cargo-metadata-aarch64-apple-darwin.json \
+            --metadata x86_64-pc-windows-msvc=artifacts.cargo-metadata-x86_64-pc-windows-msvc.json \
             --repository "${GITHUB_REPOSITORY}" \
             --version "${RELEASE_VERSION}" \
             --revision "${GITHUB_SHA}" \

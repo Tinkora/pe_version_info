@@ -6,6 +6,7 @@ use pe_version_info_core::config::{
 };
 use pe_version_info_core::error::CoreError;
 use pe_version_info_core::inspect::inspect;
+use pe_version_info_core::signature::SignatureValidationStatus;
 use pe_version_info_core::verify::verify_requested_resources;
 use pe_version_info_core::version_info::prepare_version_resources;
 use pe_version_info_core::{VersionNumber, apply};
@@ -67,7 +68,10 @@ fn writes_to_a_separate_output_and_reports_hashes() {
     assert_eq!(report.input_sha256.len(), 64);
     assert_eq!(report.output_sha256.len(), 64);
     assert!(!report.signature.input_certificate_table_present);
-    assert!(!report.signature.output_signature_validated);
+    assert_eq!(
+        report.signature.output_signature_validation,
+        SignatureValidationStatus::NotChecked
+    );
     let inspection = inspect(&output).unwrap();
     assert_eq!(
         inspection.version_info.unwrap().file_version.components(),
@@ -204,6 +208,29 @@ fn rejects_signed_input_by_default_and_requires_both_acknowledgements() {
     let report = apply::apply(&request).expect("both acknowledgements should permit invalidation");
     assert!(report.signature.input_certificate_table_present);
     assert!(report.signature.signature_invalidated_by_edit);
+}
+
+#[test]
+fn rejects_empty_mutations_before_signature_authorization_or_writing() {
+    let directory = tempdir().unwrap();
+    let input = directory.path().join("signed.exe");
+    let output = directory.path().join("output.exe");
+    let mut bytes = fs::read(fixture("pe32_unsigned.exe")).unwrap();
+    add_certificate_table_marker(&mut bytes);
+    fs::write(&input, bytes).unwrap();
+
+    let error = apply::apply(&apply::ApplyRequest {
+        input: input.clone(),
+        output: output.clone(),
+        version: None,
+        icon: None,
+        policy: Policy::default(),
+        authorization: ExecutionAuthorization::default(),
+    })
+    .expect_err("an empty mutation must be rejected");
+
+    assert_eq!(error.code(), "no_mutation_requested");
+    assert!(!output.exists());
 }
 
 #[test]
