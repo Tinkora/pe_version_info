@@ -229,7 +229,7 @@ jobs:
             exit 1
           }
 
-      - name: Create draft GitHub Release
+      - name: Create or reuse GitHub Release
         id: create_release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -238,17 +238,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          body="$(cat CHANGELOG.md)
+          release_json="$(gh api "repos/${GH_REPO}/releases/tags/${RELEASE_TAG}" 2>/dev/null || true)"
+          if [[ -n "${release_json}" ]]; then
+            release_id="$(jq -r '.id' <<<"${release_json}")"
+            echo "Reusing existing release ${release_id} for ${RELEASE_TAG}."
+          else
+            body="$(cat CHANGELOG.md)
 
-          中文说明：请参阅 [中文 README](https://github.com/${GH_REPO}/blob/${RELEASE_TAG}/README.zh-CN.md) 和 [中文发布流程](https://github.com/${GH_REPO}/blob/${RELEASE_TAG}/docs/RELEASING.zh-CN.md)。"
-          release_id="$(gh api --method POST "repos/${GH_REPO}/releases" \
-            -f tag_name="${RELEASE_TAG}" \
-            -f target_commitish="${GITHUB_SHA}" \
-            -f name="PE Version Info ${RELEASE_TAG}" \
-            -f body="${body}" \
-            -F draft=true \
-            -F prerelease=true \
-            --jq '.id')"
+            中文说明：请参阅 [中文 README](https://github.com/${GH_REPO}/blob/${RELEASE_TAG}/README.zh-CN.md) 和 [中文发布流程](https://github.com/${GH_REPO}/blob/${RELEASE_TAG}/docs/RELEASING.zh-CN.md)。"
+            release_id="$(gh api --method POST "repos/${GH_REPO}/releases" \
+              -f tag_name="${RELEASE_TAG}" \
+              -f target_commitish="${GITHUB_SHA}" \
+              -f name="PE Version Info ${RELEASE_TAG}" \
+              -f body="${body}" \
+              -F draft=true \
+              -F prerelease=true \
+              --jq '.id')"
+          fi
           echo "release_id=${release_id}" >> "${GITHUB_OUTPUT}"
 
       - name: Upload verified assets

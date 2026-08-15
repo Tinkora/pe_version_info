@@ -45,6 +45,22 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertIn("-F draft=true", release)
         self.assertIn("-F draft=false", release)
 
+    def test_release_publication_reuses_an_existing_release(self) -> None:
+        release = job_block(self.workflow, "release")
+
+        self.assertIn(
+            'if [[ -n "${release_json}" ]]; then',
+            release,
+        )
+        self.assertIn(
+            'releases/tags/${RELEASE_TAG}',
+            release,
+        )
+        self.assertIn(
+            'release_id="$(jq -r \'.id\' <<<"${release_json}")"',
+            release,
+        )
+
     def test_privileged_evidence_job_uses_release_environment(self) -> None:
         evidence = job_block(self.workflow, "evidence")
 
