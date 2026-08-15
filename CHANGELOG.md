@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
+<!-- markdownlint-disable MD024 -->
+
 ## [Unreleased]
 
 No changes yet.
@@ -51,3 +53,5 @@ No changes yet.
 
 - Initial cross-platform `pevi` CLI candidate for inspecting and updating PE VERSIONINFO and icons.
 - Draft Codex Skill/plugin scaffold and bilingual documentation.
+
+<!-- markdownlint-enable MD024 -->
