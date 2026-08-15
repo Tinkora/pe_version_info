@@ -49,15 +49,17 @@ class ReleaseWorkflowTests(unittest.TestCase):
         release = job_block(self.workflow, "release")
 
         self.assertIn(
-            'if [[ -n "${release_json}" ]]; then',
+            'if release_json="$(gh api',
             release,
         )
+        self.assertIn('2>/dev/null)"; then', release)
+        self.assertNotIn('if [[ -n "${release_json}" ]]', release)
         self.assertIn(
             'releases/tags/${RELEASE_TAG}',
             release,
         )
         self.assertIn(
-            'release_id="$(jq -r \'.id\' <<<"${release_json}")"',
+            'release_id="$(jq -er \'.id\' <<<"${release_json}")"',
             release,
         )
 
