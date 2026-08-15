@@ -1,6 +1,6 @@
 # Tinkora PE Version Info
 
-> **Status: Alpha CLI prerelease (`v0.1.0-alpha.2`)** — the native CLI has hosted
+> **Status: Alpha CLI prerelease (`v0.1.0-alpha.3`)** — the native CLI has hosted
 > three-platform, clean-consumer, Windows resource, and Authenticode evidence.
 > The Codex Skill/plugin remains Draft and is not an Agent-callable MCP release.
 
@@ -50,13 +50,13 @@ Download the archive and its matching `.sha256` file, then verify it before
 placing `pevi` on `PATH`:
 
 ```bash
-gh release download v0.1.0-alpha.2 \
+gh release download v0.1.0-alpha.3 \
   --repo Tinkora/pe_version_info \
-  --pattern 'pevi-v0.1.0-alpha.2-*' \
+  --pattern 'pevi-v0.1.0-alpha.3-*' \
   --dir release-assets
 cd release-assets
 sha256sum --check --strict ./*.sha256
-tar -xzf pevi-v0.1.0-alpha.2-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf pevi-v0.1.0-alpha.3-x86_64-unknown-linux-gnu.tar.gz
 install -m 0755 pevi "$HOME/.local/bin/pevi"
 pevi --version
 ```

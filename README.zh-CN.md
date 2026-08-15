@@ -1,6 +1,6 @@
 # Tinkora PE Version Info
 
-> **状态：Alpha CLI prerelease（`v0.1.0-alpha.2`）**——native CLI 已通过三平台、干净消费环境、Windows 资源和 Authenticode 证据；Codex Skill/plugin 仍是 Draft，不是 Agent-callable MCP 发布物。
+> **状态：Alpha CLI prerelease（`v0.1.0-alpha.3`）**——native CLI 已通过三平台、干净消费环境、Windows 资源和 Authenticode 证据；Codex Skill/plugin 仍是 Draft，不是 Agent-callable MCP 发布物。
 
 [English](README.md)
 
@@ -44,13 +44,13 @@ Linux x86-64、macOS Apple Silicon 和 Windows x86-64 归档。下载归档及�
 `.sha256` 文件，校验后再把 `pevi` 放入 `PATH`：
 
 ```bash
-gh release download v0.1.0-alpha.2 \
+gh release download v0.1.0-alpha.3 \
   --repo Tinkora/pe_version_info \
-  --pattern 'pevi-v0.1.0-alpha.2-*' \
+  --pattern 'pevi-v0.1.0-alpha.3-*' \
   --dir release-assets
 cd release-assets
 sha256sum --check --strict ./*.sha256
-tar -xzf pevi-v0.1.0-alpha.2-x86_64-unknown-linux-gnu.tar.gz
+tar -xzf pevi-v0.1.0-alpha.3-x86_64-unknown-linux-gnu.tar.gz
 install -m 0755 pevi "$HOME/.local/bin/pevi"
 pevi --version
 ```
