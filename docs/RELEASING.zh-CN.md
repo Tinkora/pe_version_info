@@ -12,7 +12,7 @@
 4. 默认输出到新文件，执行 `pevi apply` 后再执行 `pevi verify`。
 5. 资源修改和验证完成后才进行 Authenticode 签名。
 6. 执行独立签名检查并记录输入/输出 SHA-256。
-7. 为准确的 workspace 版本创建受保护 tag，例如 `v0.1.0-alpha.2`，
+7. 为准确的 workspace 版本创建受保护 tag，例如 `v0.1.0-alpha.3`，
    等待 tag 触发的 `Release` workflow。
 8. 下载三个目标归档和聚合证据 artifact，核验 `SHA256SUMS`、
    `sbom.spdx.json`、`license_inventory.json` 和
@@ -31,13 +31,13 @@ workflow：
 gh attestation verify PATH_TO_BINARY \
   --repo Tinkora/pe_version_info \
   --signer-workflow Tinkora/pe_version_info/.github/workflows/release.yml \
-  --source-ref refs/tags/v0.1.0-alpha.2 \
+  --source-ref refs/tags/v0.1.0-alpha.3 \
   --source-digest COMMIT_SHA
 gh attestation verify PATH_TO_BINARY \
   --repo Tinkora/pe_version_info \
   --signer-workflow Tinkora/pe_version_info/.github/workflows/release.yml \
   --predicate-type https://spdx.dev/Document/v2.3 \
-  --source-ref refs/tags/v0.1.0-alpha.2 \
+  --source-ref refs/tags/v0.1.0-alpha.3 \
   --source-digest COMMIT_SHA
 ```
 

@@ -2,9 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+<!-- markdownlint-disable MD024 -->
+
 ## [Unreleased]
 
 No changes yet.
+
+## [0.1.0-alpha.3] - 2026-08-15
+
+### Fixed
+
+- Write Windows per-asset checksum files with portable LF line endings so
+  `sha256sum --check` works on Unix consumers.
+- Reuse an existing GitHub Release when a protected tag workflow is retried,
+  keeping publication idempotent after a partial failure.
+
+### Added
+
+- Add the verified Tinkora Ko-fi funding metadata.
 
 ## [0.1.0-alpha.2] - 2026-08-14
 
@@ -38,3 +53,5 @@ No changes yet.
 
 - Initial cross-platform `pevi` CLI candidate for inspecting and updating PE VERSIONINFO and icons.
 - Draft Codex Skill/plugin scaffold and bilingual documentation.
+
+<!-- markdownlint-enable MD024 -->
