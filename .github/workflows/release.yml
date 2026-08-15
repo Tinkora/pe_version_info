@@ -238,9 +238,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          release_json="$(gh api "repos/${GH_REPO}/releases/tags/${RELEASE_TAG}" 2>/dev/null || true)"
-          if [[ -n "${release_json}" ]]; then
-            release_id="$(jq -r '.id' <<<"${release_json}")"
+          if release_json="$(gh api \
+            "repos/${GH_REPO}/releases/tags/${RELEASE_TAG}" \
+            2>/dev/null)"; then
+            release_id="$(jq -er '.id' <<<"${release_json}")"
             echo "Reusing existing release ${release_id} for ${RELEASE_TAG}."
           else
             body="$(cat CHANGELOG.md)
