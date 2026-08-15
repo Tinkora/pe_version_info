@@ -24,6 +24,11 @@
    attestation。
 10. workflow 只有在仓库规则和受保护的 `release` 环境满足后才会发布 prerelease。
 
+发布 job 使用一次 `gh release create` 操作同时创建 draft 并上传全部已验证
+资产。重试时会先删除上次中断留下的 draft，再重新创建；如果 Release 已经
+公开，workflow 必须确认远端资产清单和 SHA-256 digest 完全一致，并且不会
+覆盖已发布文件。
+
 对每个下载的二进制验证两种 predicate，并把 signer 限定为本仓库的发布
 workflow：
 

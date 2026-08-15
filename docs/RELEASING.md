@@ -29,6 +29,12 @@ environment gate. Local success is not release authority.
 10. The workflow creates and publishes the prerelease only after repository
     rules and the protected `release` environment are satisfied.
 
+The publication job creates a draft and uploads all verified assets in one
+`gh release create` operation. A retry deletes an interrupted draft before
+recreating it. If the release is already public, the workflow requires the
+remote asset inventory and SHA-256 digests to match exactly and does not
+overwrite published files.
+
 For each downloaded binary, verify both predicates and bind the signer to this
 repository's release workflow:
 

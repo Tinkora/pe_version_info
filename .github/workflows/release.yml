@@ -238,36 +238,128 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if release_json="$(gh api \
-            "repos/${GH_REPO}/releases/tags/${RELEASE_TAG}" \
-            2>/dev/null)"; then
-            release_id="$(jq -er '.id' <<<"${release_json}")"
-            echo "Reusing existing release ${release_id} for ${RELEASE_TAG}."
-          else
-            body="$(cat CHANGELOG.md)
+          mapfile -d '' assets < <(
+            find release-assets -maxdepth 1 -type f -print0 | LC_ALL=C sort -z
+          )
+          {
+            cat CHANGELOG.md
+            printf '\n中文说明：请参阅 [中文 README](https://github.com/%s/blob/%s/README.zh-CN.md) 和 [中文发布流程](https://github.com/%s/blob/%s/docs/RELEASING.zh-CN.md)。\n' \
+              "${GH_REPO}" "${RELEASE_TAG}" "${GH_REPO}" "${RELEASE_TAG}"
+          } > "${RUNNER_TEMP}/release-notes.md"
 
-            中文说明：请参阅 [中文 README](https://github.com/${GH_REPO}/blob/${RELEASE_TAG}/README.zh-CN.md) 和 [中文发布流程](https://github.com/${GH_REPO}/blob/${RELEASE_TAG}/docs/RELEASING.zh-CN.md)。"
-            release_id="$(gh api --method POST "repos/${GH_REPO}/releases" \
-              -f tag_name="${RELEASE_TAG}" \
-              -f target_commitish="${GITHUB_SHA}" \
-              -f name="PE Version Info ${RELEASE_TAG}" \
-              -f body="${body}" \
-              -F draft=true \
-              -F prerelease=true \
-              --jq '.id')"
+          releases_json="$(gh api --paginate --slurp \
+            "repos/${GH_REPO}/releases?per_page=100")"
+          matching_releases="$(jq -c --arg tag "${RELEASE_TAG}" \
+            '[.[][] | select(.tag_name == $tag)]' <<<"${releases_json}")"
+          match_count="$(jq -r 'length' <<<"${matching_releases}")"
+          if ((match_count > 1)); then
+            echo "multiple releases use ${RELEASE_TAG}" >&2
+            exit 1
+          fi
+
+          release_id=""
+          if ((match_count == 1)); then
+            release_json="$(jq -c '.[0]' <<<"${matching_releases}")"
+            release_id="$(jq -er '.id' <<<"${release_json}")"
+            if jq -e '.draft == true' <<<"${release_json}" >/dev/null; then
+              echo "Replacing interrupted draft ${release_id} for ${RELEASE_TAG}."
+              gh api --method DELETE "repos/${GH_REPO}/releases/${release_id}"
+              release_id=""
+            else
+              echo "Reusing published release ${release_id} for ${RELEASE_TAG}."
+            fi
+          fi
+
+          if [[ -z "${release_id}" ]]; then
+            gh release create "${RELEASE_TAG}" "${assets[@]}" \
+              --repo "${GH_REPO}" \
+              --verify-tag \
+              --target "${GITHUB_SHA}" \
+              --title "PE Version Info ${RELEASE_TAG}" \
+              --notes-file "${RUNNER_TEMP}/release-notes.md" \
+              --draft \
+              --prerelease >/dev/null
+            releases_json="$(gh api --paginate --slurp \
+              "repos/${GH_REPO}/releases?per_page=100")"
+            matching_releases="$(jq -c --arg tag "${RELEASE_TAG}" \
+              '[.[][] | select(.tag_name == $tag and .draft == true)]' \
+              <<<"${releases_json}")"
+            if [[ "$(jq -r 'length' <<<"${matching_releases}")" != "1" ]]; then
+              echo "new draft release cannot be resolved uniquely" >&2
+              exit 1
+            fi
+            release_id="$(jq -er '.[0].id' <<<"${matching_releases}")"
           fi
           echo "release_id=${release_id}" >> "${GITHUB_OUTPUT}"
 
-      - name: Upload verified assets
+      - name: Verify remote release assets
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ env.RELEASE_TAG }}
-        run: gh release upload "${RELEASE_TAG}" release-assets/* --repo "${GH_REPO}" --clobber
+          RELEASE_ID: ${{ steps.create_release.outputs.release_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' assets < <(
+            find release-assets -maxdepth 1 -type f -print0 | LC_ALL=C sort -z
+          )
+          release_json="$(gh api "repos/${GH_REPO}/releases/${RELEASE_ID}")"
+          jq -e --arg tag "${RELEASE_TAG}" \
+            '.tag_name == $tag and .prerelease == true' \
+            <<<"${release_json}" >/dev/null
+          expected_names="$(printf '%s\n' "${assets[@]}" | sed 's|.*/||' | LC_ALL=C sort)"
+          remote_names="$(jq -r '.assets[].name' <<<"${release_json}" | LC_ALL=C sort)"
+          if [[ "${remote_names}" != "${expected_names}" ]]; then
+            echo "Remote release asset inventory is not exact." >&2
+            exit 1
+          fi
+          for asset in "${assets[@]}"; do
+            asset_name="$(basename "${asset}")"
+            local_digest="sha256:$(sha256sum -- "${asset}" | cut -d ' ' -f 1)"
+            remote_digest="$(jq -r --arg name "${asset_name}" \
+              '.assets[] | select(.name == $name) | .digest // empty' \
+              <<<"${release_json}")"
+            if [[ "${remote_digest}" != "${local_digest}" ]]; then
+              echo "Remote release asset digest does not match ${asset_name}." >&2
+              exit 1
+            fi
+          done
 
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_ID: ${{ steps.create_release.outputs.release_id }}
-        run: gh api --method PATCH "repos/${GH_REPO}/releases/${RELEASE_ID}" -F draft=false -F prerelease=true
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_json="$(gh api "repos/${GH_REPO}/releases/${RELEASE_ID}")"
+          if jq -e '.draft == true' <<<"${release_json}" >/dev/null; then
+            gh api --method PATCH "repos/${GH_REPO}/releases/${RELEASE_ID}" \
+              -F draft=false \
+              -F prerelease=true \
+              --jq '.draft' | grep -qx false
+          else
+            jq -e '.draft == false and .prerelease == true' \
+              <<<"${release_json}" >/dev/null
+          fi
+
+      - name: Remove failed release draft
+        if: ${{ failure() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_ID: ${{ steps.create_release.outputs.release_id }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          [[ "${RELEASE_ID}" =~ ^[0-9]+$ ]] || exit 0
+          release_json="$(gh api \
+            "repos/${GH_REPO}/releases/${RELEASE_ID}" 2>/dev/null)" || exit 0
+          if jq -e --arg tag "${RELEASE_TAG}" \
+            '.draft == true and .tag_name == $tag' \
+            <<<"${release_json}" >/dev/null; then
+            gh api --method DELETE "repos/${GH_REPO}/releases/${RELEASE_ID}"
+          fi
