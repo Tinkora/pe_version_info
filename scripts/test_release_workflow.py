@@ -41,27 +41,25 @@ class ReleaseWorkflowTests(unittest.TestCase):
         release = job_block(self.workflow, "release")
         self.assertIn("needs: evidence", release)
         self.assertRegex(release, r"(?m)^    permissions:\n      contents: write$")
-        self.assertIn("gh api --method POST", release)
-        self.assertIn("-F draft=true", release)
+        self.assertIn("gh release create", release)
+        self.assertIn("--draft", release)
         self.assertIn("-F draft=false", release)
 
-    def test_release_publication_reuses_an_existing_release(self) -> None:
+    def test_new_release_uploads_assets_during_draft_creation(self) -> None:
         release = job_block(self.workflow, "release")
 
-        self.assertIn(
-            'if release_json="$(gh api',
-            release,
-        )
-        self.assertIn('2>/dev/null)"; then', release)
-        self.assertNotIn('if [[ -n "${release_json}" ]]', release)
-        self.assertIn(
-            'releases/tags/${RELEASE_TAG}',
-            release,
-        )
-        self.assertIn(
-            'release_id="$(jq -er \'.id\' <<<"${release_json}")"',
-            release,
-        )
+        self.assertIn('gh release create "${RELEASE_TAG}" "${assets[@]}"', release)
+        self.assertNotIn("gh release upload", release)
+
+    def test_release_retry_replaces_drafts_but_only_verifies_published_assets(self) -> None:
+        release = job_block(self.workflow, "release")
+
+        self.assertIn("--paginate --slurp", release)
+        self.assertIn(".tag_name == $tag", release)
+        self.assertIn(".draft == true", release)
+        self.assertIn("--method DELETE", release)
+        self.assertIn("Remote release asset inventory is not exact", release)
+        self.assertIn("Remote release asset digest does not match", release)
 
     def test_privileged_evidence_job_uses_release_environment(self) -> None:
         evidence = job_block(self.workflow, "evidence")

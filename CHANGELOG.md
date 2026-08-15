@@ -6,7 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-No changes yet.
+### Fixed
+
+- Upload assets as part of draft creation so a new release never depends on
+  resolving an unpublished draft by tag. Retries replace interrupted drafts
+  and verify already-published asset names and digests without overwriting them.
 
 ## [0.1.0-alpha.3] - 2026-08-15
 
