@@ -12,6 +12,20 @@ All notable changes to this project will be documented in this file.
   resolving an unpublished draft by tag. Retries replace interrupted drafts
   and verify already-published asset names and digests without overwriting them.
 
+## [0.1.0-alpha.4] - 2026-08-17
+
+### Fixed
+
+- Create release drafts with their complete asset set and make retries
+  idempotent without replacing an already-published release.
+- Bind release evidence and asset verification to the exact protected tag
+  commit before publication.
+
+### Added
+
+- Include the complete target-scoped checksum, SPDX SBOM, license inventory,
+  and third-party notice evidence in the release artifact set.
+
 ## [0.1.0-alpha.3] - 2026-08-15
 
 ### Fixed
