@@ -15,7 +15,7 @@ environment gate. Local success is not release authority.
 5. Authenticode-sign only after resource edits and verification are complete.
 6. Run a final independent signature check and record input/output SHA-256.
 7. Create the protected tag for the exact workspace version, for example
-   `v0.1.0-alpha.3`, and wait for the tag-triggered `Release` workflow.
+   `v0.1.0-alpha.4`, and wait for the tag-triggered `Release` workflow.
 8. Download the three target archives and aggregate evidence artifact. Verify
    `SHA256SUMS`, `sbom.spdx.json`, `license_inventory.json`, and
    `THIRD_PARTY_NOTICES.md`. The SBOM and license inventory contain the union
@@ -42,13 +42,13 @@ repository's release workflow:
 gh attestation verify PATH_TO_BINARY \
   --repo Tinkora/pe_version_info \
   --signer-workflow Tinkora/pe_version_info/.github/workflows/release.yml \
-  --source-ref refs/tags/v0.1.0-alpha.3 \
+  --source-ref refs/tags/v0.1.0-alpha.4 \
   --source-digest COMMIT_SHA
 gh attestation verify PATH_TO_BINARY \
   --repo Tinkora/pe_version_info \
   --signer-workflow Tinkora/pe_version_info/.github/workflows/release.yml \
   --predicate-type https://spdx.dev/Document/v2.3 \
-  --source-ref refs/tags/v0.1.0-alpha.3 \
+  --source-ref refs/tags/v0.1.0-alpha.4 \
   --source-digest COMMIT_SHA
 ```
 
