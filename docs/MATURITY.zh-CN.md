@@ -1,6 +1,6 @@
 # 成熟度与能力标签
 
-从 `v0.1.0-alpha.2` 起，native CLI 为 **Alpha**：核心成功、无效输入、边界、
+从 `v0.1.0-alpha.4` 起，native CLI 为 **Alpha**：核心成功、无效输入、边界、
 干净消费环境、独立 Windows 资源以及真实 Authenticode 修改前后行为已经在 tag
 commit 的托管检查中通过。Codex Skill/plugin 仍为 **Draft**，直到记录一次
 fresh-agent 验收；它不是 Agent-callable MCP 发布物。

@@ -1,6 +1,6 @@
 # Maturity and capability labels
 
-The native CLI is **Alpha** as of `v0.1.0-alpha.2`: core success, invalid-input,
+The native CLI is **Alpha** as of `v0.1.0-alpha.4`: core success, invalid-input,
 boundary, clean-consumer, independent Windows resource, and real Authenticode
 pre/post-edit behavior has passed hosted checks on the tagged commit. The
 Codex Skill/plugin remains **Draft** until a fresh-agent acceptance run is
